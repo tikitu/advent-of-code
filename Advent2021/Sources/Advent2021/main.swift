@@ -5,7 +5,7 @@ struct Script: ParsableCommand {
         abstract: "Run Advent of Code 2021 programs",
         version: "0.0.1",
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
-                      Day3_1.self, Day3_2.self]
+                      Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self]
     )
 }
 
@@ -271,6 +271,106 @@ func binary(_ s: String) -> Int {
             return accum + (2 << (i - 1))
         default:
             return accum
+        }
+    }
+}
+
+extension Script {
+    struct Board {
+        let numbers: [[Int]] // 5x5
+        var marks: [[Bool]] = [[false, false, false, false, false],
+                               [false, false, false, false, false],
+                               [false, false, false, false, false],
+                               [false, false, false, false, false],
+                               [false, false, false, false, false]]
+
+        /// Mark the number, and return true if it won (else false)
+        mutating func mark(number: Int) -> Bool {
+            for row in (0..<5) {
+                for col in (0..<5) {
+                    if numbers[row][col] == number {
+                        marks[row][col] = true
+                        if marks[row].allSatisfy({ $0 })
+                            || marks.map({ $0[col] }).allSatisfy({ $0 }) {
+                            return true
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        func unmarked() -> Int {
+            return zip(numbers.flatMap { $0 }, marks.flatMap { $0 })
+                .filter { !$0.1 }
+                .map { $0.0 }
+                .reduce(0, +)
+        }
+    }
+
+    static func readBoard() -> Board? {
+        guard readLine() != nil else { return nil }
+        return Board(numbers: [
+            readLine()!.split(separator: " ").map { Int($0)! },
+            readLine()!.split(separator: " ").map { Int($0)! },
+            readLine()!.split(separator: " ").map { Int($0)! },
+            readLine()!.split(separator: " ").map { Int($0)! },
+            readLine()!.split(separator: " ").map { Int($0)! },
+        ])
+    }
+
+    struct Day4_1: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "4_1"
+        )
+
+        func run() {
+            let numbers = readLine()!.split(separator: ",").map { Int($0)! }
+            var boards: [Board] = []
+            while let board = readBoard() {
+                boards.append(board)
+            }
+
+            for number in numbers {
+                for i in (0..<boards.count) {
+                    if boards[i].mark(number: number) {
+                        print("board won! with \(number)")
+                        print(boards[i])
+                        let score = boards[i].unmarked()
+                        print("score \(score) * \(number) = \(score * number)")
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    struct Day4_2: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "4_2"
+        )
+
+        func run() {
+            let numbers = readLine()!.split(separator: ",").map { Int($0)! }
+            var boards: [Board] = []
+            while let board = readBoard() {
+                boards.append(board)
+            }
+
+            for number in numbers {
+                for i in (0..<boards.count).reversed() {
+                    if boards[i].mark(number: number) {
+                        print("board won! with \(number)")
+                        if boards.count == 1 {
+                            let score = boards[i].unmarked()
+                            print("score \(score) * \(number) = \(score * number)")
+                            return
+                        } else {
+                            boards.remove(at: i)
+                        }
+                    }
+                }
+            }
         }
     }
 }

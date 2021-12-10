@@ -4,7 +4,7 @@ struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Run Advent of Code 2021 programs",
         version: "0.0.1",
-        subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self]
+        subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self, Day3_1.self]
     )
 }
 
@@ -154,6 +154,54 @@ extension Script {
         }
     }
 
+}
+
+func getLines() -> [String] {
+    // there *must* be a better way than this?!
+    var lines: [String] = []
+    while let line = readLine() {
+        lines.append(line)
+    }
+    return lines
+}
+
+extension Script {
+    struct Day3_1: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "3_1")
+
+        func run() {
+            let lines = getLines()
+                .map { $0.reversed() } // these are numbers: align the least-significant bits
+            var ones: [Int: Int] = [:]
+            var zeros: [Int: Int] = [:]
+            for line in lines {
+                for (i, c) in line.enumerated() {
+                    switch c {
+                    case "0":
+                        zeros[i, default: 0] += 1
+                    case "1":
+                        ones[i, default: 0] += 1
+                    default:
+                        fatalError()
+                    }
+                }
+            }
+            print("ones: \(ones)")
+            print("zeros: \(zeros)")
+
+            var gamma = 0
+            var epsilon = 0
+            for i in (Set(ones.keys).union(Set(zeros.keys)).sorted()) {
+                if ones[i, default: 0] > zeros[i, default: 0] {
+                    gamma += 2 << (i - 1)
+                } else { // specs don't say what happens if they're equal, shrug
+                    epsilon += 2 << (i - 1)
+                }
+            }
+            print("gamma: \(gamma)")
+            print("epsilon: \(epsilon)")
+        }
+    }
 }
 
 Script.main()

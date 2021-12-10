@@ -4,7 +4,8 @@ struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Run Advent of Code 2021 programs",
         version: "0.0.1",
-        subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self, Day3_1.self]
+        subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
+                      Day3_1.self, Day3_2.self]
     )
 }
 
@@ -200,6 +201,76 @@ extension Script {
             }
             print("gamma: \(gamma)")
             print("epsilon: \(epsilon)")
+        }
+    }
+}
+
+extension Script {
+    struct Day3_2: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "3_2")
+
+        func count(_ lines: [String]) -> ([Int: Int], [Int: Int]) {
+            var ones: [Int: Int] = [:]
+            var zeros: [Int: Int] = [:]
+            for line in lines.map({ $0.reversed() }) {
+                for (i, c) in line.enumerated() {
+                    switch c {
+                    case "0":
+                        zeros[i, default: 0] += 1
+                    case "1":
+                        ones[i, default: 0] += 1
+                    default:
+                        fatalError()
+                    }
+                }
+            }
+            return (ones, zeros)
+        }
+
+        func run() {
+            let lines = getLines()
+
+            var oxygon = lines
+            var bitIndex = 0
+            while oxygon.count > 1 {
+                let (ones, zeros) = count(oxygon)
+                let maxBitIndex = max(ones.keys.max()!, zeros.keys.max()!)
+                let shouldBe: String = ones[maxBitIndex - bitIndex, default: 0] >= zeros[maxBitIndex - bitIndex, default: 0] ? "1" : "0"
+                oxygon.removeAll(where: { s in
+                    s.count >= bitIndex &&
+                    s.dropFirst(bitIndex).first.map(String.init) != shouldBe
+                })
+                bitIndex += 1
+                print("partial: ", oxygon)
+            }
+            print(oxygon, " -> ", binary(oxygon.first!))
+
+            var co2 = lines
+            bitIndex = 0
+            while co2.count > 1 {
+                let (ones, zeros) = count(co2)
+                let maxBitIndex = max(ones.keys.max()!, zeros.keys.max()!)
+                let shouldBe: String = ones[maxBitIndex - bitIndex, default: 0] < zeros[maxBitIndex - bitIndex, default: 0] ? "1" : "0"
+                co2.removeAll(where: { s in
+                    s.count >= bitIndex &&
+                    s.dropFirst(bitIndex).first.map(String.init) != shouldBe
+                })
+                bitIndex += 1
+                print("partial: ", co2)
+            }
+            print(co2, " -> ", binary(co2.first!))
+        }
+    }
+}
+
+func binary(_ s: String) -> Int {
+    s.reversed().enumerated().reduce(0) { (accum, pos) in
+        let (i, bit) = pos
+        switch bit {
+        case "1":
+            return accum + (2 << (i - 1))
+        default:
+            return accum
         }
     }
 }

@@ -4,7 +4,7 @@ struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Run Advent of Code 2021 programs",
         version: "0.0.1",
-        subcommands: [Day1_1.self, Day1_2.self]
+        subcommands: [Day1_1.self, Day1_2.self, Day2_1.self]
     )
 }
 
@@ -46,6 +46,56 @@ extension Script {
             let smoothed = zip(zip(depths, depths.dropFirst()), depths.dropFirst().dropFirst())
                 .map { $0.0 + $0.1 + $1 }
             print(countIncreases(smoothed))
+        }
+    }
+}
+
+extension Script {
+    struct Day2_1: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "2_1")
+
+        func run() {
+            var commands: [Command] = []
+            while let line = readLine() {
+                commands.append(Command(from: line))
+            }
+            let position = commands.reduce((0,0)) { (pos, command) in
+                var (h, depth) = pos
+                switch command.direction {
+                case .forward:
+                    h += command.distance
+                case .down:
+                    depth += command.distance
+                case .up:
+                    depth -= command.distance
+                }
+                return (h, depth)
+            }
+            print(position)
+        }
+
+        struct Command {
+            let direction: Direction
+            let distance: Int
+
+            init(from line: String) {
+                let split = line.split(separator: " ")
+                switch split[0] {
+                case "forward":
+                    direction = .forward
+                case "up":
+                    direction = .up
+                case "down":
+                    direction = .down
+                default:
+                    fatalError()
+                }
+                distance = Int(split[1])!
+            }
+        }
+
+        enum Direction: String {
+            case forward, down, up
         }
     }
 }

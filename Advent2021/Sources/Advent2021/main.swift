@@ -6,7 +6,7 @@ struct Script: ParsableCommand {
         version: "0.0.1",
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
-                      Day5_1.self]
+                      Day5_1.self, Day5_2.self]
     )
 }
 
@@ -413,6 +413,37 @@ extension Script {
 
             var seabed = Array(repeating: 0, count: (maxX + 1) * (maxY + 1))
             for line in horizontalAndVertical {
+                var p = line.start
+                seabed[p.0 + maxX * p.1] += 1
+                while p != line.end {
+                    if p.0 < line.end.0 { p.0 += 1 }
+                    if p.0 > line.end.0 { p.0 -= 1 }
+                    if p.1 < line.end.1 { p.1 += 1 }
+                    if p.1 > line.end.1 { p.1 -= 1 }
+                    seabed[p.0 + maxX * p.1] += 1
+                }
+            }
+            let dangerous = seabed.filter { $0 > 1 }
+            for row in (0...maxY) {
+                print(seabed[row * maxX ..< (row + 1) * maxX])
+            }
+            print("counted to \(dangerous.count)")
+        }
+    }
+
+    struct Day5_2: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "5_2"
+        )
+
+        func run() {
+            let lines = readLines().map(LineSegment.init(from:))
+
+            let maxX = lines.map { max($0.start.0, $0.end.0 ) }.max()!
+            let maxY = lines.map { max($0.start.1, $0.end.1) }.max()!
+
+            var seabed = Array(repeating: 0, count: (maxX + 1) * (maxY + 1))
+            for line in lines {
                 var p = line.start
                 seabed[p.0 + maxX * p.1] += 1
                 while p != line.end {

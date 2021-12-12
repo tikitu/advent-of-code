@@ -7,7 +7,8 @@ struct Script: ParsableCommand {
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
-                      Day8_1.self, Day8_2.self, Day9_1.self, Day10.self]
+                      Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
+                      Day11.self]
     )
 }
 
@@ -898,6 +899,140 @@ extension Script {
     }
 }
 
+extension Script {
+    struct Day11: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "11"
+        )
+
+        struct CaveMap {
+            let x: Int
+            let y: Int
+            var values: [Int] // values.count = x * y
+
+            init(from strings: [String]) {
+                let values: [Int] = strings
+                    .map { Array($0) }
+                    .flatMap { $0.map { String($0) } } // wowza
+                    .map { Int($0)! }
+                self.init(
+                    x: strings.first!.count,
+                    y: strings.count,
+                    values: values
+                )
+            }
+
+            init(x: Int, y: Int, values: [Int]) {
+                precondition(values.count == x * y)
+                self.x = x
+                self.y = y
+                self.values = values
+            }
+
+            func value(x: Int, y: Int) -> Int? {
+                if x < 0 || x >= self.x { return nil }
+                if y < 0 || y >= self.y { return nil }
+                return values[x + self.x * y]
+            }
+
+            mutating func increment(x: Int, y: Int) -> Int? {
+                if x < 0 || x >= self.x { return nil }
+                if y < 0 || y >= self.y { return nil }
+                values[x + self.x * y] += 1
+                return values[x + self.x * y]
+            }
+
+            // Returns the number of flashes
+            mutating func step() -> Int {
+                var queue: [(Int, Int)] = []
+                var flashes = 0
+                for x in (0..<self.x) {
+                    for y in (0..<self.y) {
+                        if increment(x: x, y: y) == 10 {
+                            queue.append((x, y))
+                        }
+                    }
+                }
+                while let next = queue.first {
+                    let (x, y) = next
+                    flashes += 1
+                    queue.remove(at: 0)
+                    for deltaX in [-1, 0, 1] {
+                        for deltaY in [-1, 0, 1] {
+                            if increment(x: x + deltaX, y: y + deltaY) == 10 {
+                                queue.append((x + deltaX, y + deltaY))
+                            }
+                        }
+                    }
+                }
+                for x in (0..<self.x) {
+                    for y in (0..<self.y) {
+                        if let v = value(x: x, y: y), v > 9 {
+                            values[x + self.x * y] = 0
+                        }
+                    }
+                }
+                return flashes
+            }
+
+            func prettify(_ arr: [Int]) {
+                precondition(arr.count == self.x * self.y)
+                for row in (0..<self.y) {
+                    print(arr[row * self.x..<(row+1) * self.x])
+                }
+            }
+
+            func prettyPrint() {
+                prettify(values)
+            }
+        }
+
+        func run() {
+            let input: [String] = """
+5483143223
+2745854711
+5264556173
+6141336146
+6357385478
+4167524645
+2176841721
+6882881134
+4846848554
+5283751526
+""".split(separator: "\n").map(String.init)
+            let _: [String] = """
+1553421288
+5255384882
+1224315732
+4258242274
+1658564216
+6872651182
+5775552238
+5622545172
+8766672318
+2178374835
+""".split(separator: "\n").map(String.init)
+
+            print(input)
+
+            var map = CaveMap(from: input)
+
+            var flashes = 0
+            var i = 0
+            while true {
+                i += 1
+                let flashesThisStep = map.step()
+                flashes += flashesThisStep
+                if flashesThisStep == 100 {
+                    print("*** synchronised at step \(i) ***")
+                    break
+                }
+            }
+            map.prettyPrint()
+            print(flashes)
+        }
+    }
+}
 
 Script.main()
 

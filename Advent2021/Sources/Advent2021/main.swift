@@ -7,7 +7,7 @@ struct Script: ParsableCommand {
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
-                      Day8_1.self, Day8_2.self]
+                      Day8_1.self, Day8_2.self, Day9_1.self]
     )
 }
 
@@ -675,6 +675,69 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
         }
     }
 
+}
+
+extension Script {
+    struct Day9_1: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "9_1"
+        )
+
+        struct CaveMap {
+            let x: Int
+            let y: Int
+            let heights: [Int] // heights.count = x * y
+
+            init(x: Int, y: Int, heights: [Int]) {
+                precondition(heights.count == x * y)
+                self.x = x
+                self.y = y
+                self.heights = heights
+            }
+
+            func height(x: Int, y: Int) -> Int {
+                if x < 0 || x >= self.x { return Int.max }
+                if y < 0 || y >= self.y { return Int.max }
+                return heights[x + self.x * y]
+            }
+
+            func risk() -> Int {
+                var risk = 0
+                for x in (0..<self.x) {
+                    for y in (0..<self.y) {
+                        let h = height(x: x, y: y)
+                        if height(x: x - 1, y: y) <= h { continue }
+                        if height(x: x + 1, y: y) <= h { continue }
+                        if height(x: x, y: y - 1) <= h { continue }
+                        if height(x: x, y: y + 1) <= h { continue }
+                        risk += h + 1
+                    }
+                }
+                return risk
+            }
+        }
+
+        func run() {
+            let input = readLines()
+//            let input: [String] = [
+//                "2199943210",
+//                "3987894921",
+//                "9856789892",
+//                "8767896789",
+//                "9899965678"
+//            ]
+            let heights: [Int] = input
+                .map { Array($0) }
+                .flatMap { $0.map { String($0) } } // wowza
+                .map { Int($0)! }
+            let map = CaveMap(
+                x: input.first!.count,
+                y: input.count,
+                heights: heights
+            )
+            print(map.risk())
+        }
+    }
 }
 
 Script.main()

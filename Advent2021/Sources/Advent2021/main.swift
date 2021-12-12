@@ -7,7 +7,7 @@ struct Script: ParsableCommand {
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
-                      Day8_1.self]
+                      Day8_1.self, Day8_2.self]
     )
 }
 
@@ -569,6 +569,112 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
                 .count
         }
     }
+
+    struct Day8_2: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "8_2"
+        )
+
+        func decode(allDigits: [Set<Character>], output: [String]) -> Int {
+            // 1 = cf (unique 2-segment)
+            // 7 = acf (unique 3-segment)
+                // segment a = Set(7) - Set(1)
+            // Set(4) - Set(1) = bd
+
+            // Set(4)
+            // Set(7)
+            // Set(1)
+            // Set(8) (useless)
+
+            // a is used 8 times
+            // b is used 6 times
+            // c is used 8 times
+            // d is used 7 times
+            // e is used 4 times <--
+            // f is used 9 times <--
+            // g is used 7 times
+
+            // a = Set(7) - Set(1)
+            // b = unique 6x
+            // c = Set(7) - a - f
+            // d = Set(4) - Set(1) - b
+            // e = unique 4x
+            // f = unique 9x
+            // g = ... whatever is left ...
+
+            let digit4 = allDigits.first(where: { $0.count == 4 })!
+            let digit7 = allDigits.first(where: { $0.count == 3 })!
+            let digit1 = allDigits.first(where: { $0.count == 2 })!
+
+            var counts = [Character: Int]()
+            for digit in allDigits {
+                for segment in digit {
+                    counts[segment, default: 0] += 1
+                }
+            }
+
+            let everything = allDigits.reduce(Set(), { $0.union($1) })
+
+            print(digit4, digit7, digit1, everything, counts)
+
+            let a = digit7.subtracting(digit1).first!
+            let b = counts.first(where: { (_, value) in value == 6 })!.key
+            let e = counts.first(where: { (_, value) in value == 4 })!.key
+            let f = counts.first(where: { (_, value) in value == 9 })!.key
+            let c = digit7.subtracting([a]).subtracting([f]).first!
+            let d = digit4.subtracting(digit1).subtracting([b]).first!
+            let g = everything.subtracting([a, b, c, d, e, f]).first!
+            print(a, b, c, d, e, f, g)
+
+            let lookupSegment: [Character: Character] = [
+                a: "a",
+                b: "b",
+                c: "c",
+                d: "d",
+                e: "e",
+                f: "f",
+                g: "g"
+            ]
+
+            let lookupDigit = [
+                "abcefg": 0,
+                "cf": 1,
+                "acdeg": 2,
+                "acdfg": 3,
+                "bcdf": 4,
+                "abdfg": 5,
+                "abdefg": 6,
+                "acf": 7,
+                "abcdefg": 8,
+                "abcdfg": 9
+            ]
+
+            var total = 0
+            for digit in output {
+                let unscrambled: String = String(
+                    digit
+                        .map { lookupSegment[$0]! }
+                        .sorted(by: { $0 < $1 }))
+                let value = lookupDigit[unscrambled]!
+                total = 10 * total + value
+            }
+            return total
+        }
+
+        func run() {
+            let allValues: [Int] = readLines().map {
+                let split = $0.split(separator: "|")
+                let digits: [Set<Character>] = split[0]
+                    .split(separator: " ")
+                    .filter { !$0.isEmpty }
+                    .map(Set.init)
+                let outputs = split[1].split(separator: " ").filter { !$0.isEmpty }.map(String.init)
+                return decode(allDigits: digits, output: outputs)
+            }
+            print(allValues.reduce(0, +))
+        }
+    }
+
 }
 
 Script.main()

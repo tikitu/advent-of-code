@@ -7,7 +7,7 @@ struct Script: ParsableCommand {
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
-                      Day8_1.self, Day8_2.self, Day9_1.self]
+                      Day8_1.self, Day8_2.self, Day9_1.self, Day10.self]
     )
 }
 
@@ -789,6 +789,115 @@ extension Script {
         }
     }
 }
+
+extension Script {
+    struct Day10: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "10"
+        )
+
+        class Parser {
+            init() { state = [] }
+
+            var state: [Character]
+
+            func matches(_ opening: Character?, _ closing: Character) -> Bool {
+                switch (opening, closing) {
+                case (nil, _):
+                    return false
+                case ("(", ")"), ("[", "]"), ("{", "}"), ("<", ">"):
+                    return true
+                default:
+                    return false
+                }
+            }
+
+            // Returning a character as "found unexpected char"
+            func parse(input: String) -> Character? {
+                var reversed = String(input.reversed())
+                while let next = reversed.popLast() {
+                    switch next {
+                    case "(", "[", "<", "{":
+                        state.append(next)
+                    case ")", "]", ">", "}":
+                        if matches(state.last, next) {
+                            _ = state.popLast()
+                        } else {
+                            return next
+                        }
+                    default:
+                        preconditionFailure("unrecognised character \(next)")
+                    }
+                }
+                return nil
+            }
+
+            func completionScore() -> Int {
+                var score = 0
+                while let next = state.popLast() {
+                    score *= 5
+                    switch next {
+                    case "(":
+                        score += 1
+                    case "[":
+                        score += 2
+                    case "{":
+                        score += 3
+                    case "<":
+                        score += 4
+                    default:
+                        preconditionFailure("found unexpected \(next) on state stack")
+                    }
+                }
+                return score
+            }
+        }
+
+        func corruptedValue(of c: Character) -> Int {
+            switch c {
+            case ")": return 3
+            case "]": return 57
+            case "}": return 1197
+            case ">": return 25137
+            default:
+                preconditionFailure("unexpected char \(c)")
+            }
+        }
+
+        func run() {
+//            let input = """
+//[({(<(())[]>[[{[]{<()<>>
+//[(()[<>])]({[<{<<[]>>(
+//{([(<{}[<>[]}>{[]{[(<()>
+//(((({<>}<{<{<>}{[]{[]{}
+//[[<[([]))<([[{}[[()]]]
+//[{[{({}]{}}([{[{{{}}([]
+//{<[[]]>}<{[{[{[]{()[[[]
+//[<(<(<(<{}))><([]([]()
+//<{([([[(<>()){}]>(<<{{
+//<{([{{}}[<[[[<>{}]]]>[]]
+//"""
+            var corruptedScore = 0
+            var incompleteScores: [Int] = []
+//            for line in input.split(separator: "\n").map(String.init) {
+            for line in readLines() {
+                let p = Parser()
+                if let unexpected = p.parse(input: line) {
+                    corruptedScore += corruptedValue(of: unexpected)
+                    print("corrupted: \(line) --- \(unexpected) --- \(corruptedScore)")
+                } else {
+                    let incompleteScore = p.completionScore()
+                    incompleteScores.append(incompleteScore)
+                    print("incomplete: \(line) --- \(incompleteScore)")
+                }
+            }
+            print()
+            incompleteScores.sort()
+            print(incompleteScores[incompleteScores.count / 2])
+        }
+    }
+}
+
 
 Script.main()
 

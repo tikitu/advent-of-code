@@ -6,7 +6,7 @@ struct Script: ParsableCommand {
         version: "0.0.1",
         subcommands: [Day1_1.self, Day1_2.self, Day2_1.self, Day2_2.self,
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
-                      Day5_1.self, Day5_2.self]
+                      Day5_1.self, Day5_2.self, Day6_1.self]
     )
 }
 
@@ -459,6 +459,38 @@ extension Script {
                 print(seabed[row * maxX ..< (row + 1) * maxX])
             }
             print("counted to \(dangerous.count)")
+        }
+    }
+}
+
+extension Script {
+    struct Day6_1: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "6_1"
+        )
+
+        // *must* have exactly 9 elements (indices 0...8)
+        func iterate(counts: inout [Int]) {
+            let reproducing = counts.first!
+            counts.remove(at: 0)
+            counts[6] += reproducing
+            counts.append(reproducing)
+        }
+
+        func run() {
+            let fish = [1,1,3,1,3,2,1,3,1,1,3,1,1,2,1,3,1,1,3,5,1,1,1,3,1,2,1,1,1,1,4,4,1,2,1,2,1,1,1,5,3,2,1,5,2,5,3,3,2,2,5,4,1,1,4,4,1,1,1,1,1,1,5,1,2,4,3,2,2,2,2,1,4,1,1,5,1,3,4,4,1,1,3,3,5,5,3,1,3,3,3,1,4,2,2,1,3,4,1,4,3,3,2,3,1,1,1,5,3,1,4,2,2,3,1,3,1,2,3,3,1,4,2,2,4,1,3,1,1,1,1,1,2,1,3,3,1,2,1,1,3,4,1,1,1,1,5,1,1,5,1,1,1,4,1,5,3,1,1,3,2,1,1,3,1,1,1,5,4,3,3,5,1,3,4,3,3,1,4,4,1,2,1,1,2,1,1,1,2,1,1,1,1,1,5,1,1,2,1,5,2,1,1,2,3,2,3,1,3,1,1,1,5,1,1,2,1,1,1,1,3,4,5,3,1,4,1,1,4,1,4,1,1,1,4,5,1,1,1,4,1,3,2,2,1,1,2,3,1,4,3,5,1,5,1,1,4,5,5,1,1,3,3,1,1,1,1,5,5,3,3,2,4,1,1,1,1,1,5,1,1,2,5,5,4,2,4,4,1,1,3,3,1,5,1,1,1,1,1,1]
+            //            let fish = [3,4,3,1,2]
+            var counts = Array(repeating: 0, count: 9)
+            for f in fish {
+                counts[f] += 1
+            }
+            for i in (1...256) {
+                iterate(counts: &counts)
+                if i < 20 {
+                    print("\(i): \(counts)")
+                }
+            }
+            print("total:", counts.reduce(0, +))
         }
     }
 }

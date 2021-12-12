@@ -715,6 +715,50 @@ extension Script {
                 }
                 return risk
             }
+
+            func basins() -> [Int] {
+                var basins = heights.map { _ in 0 }
+                var count = 0
+                for x in (0..<self.x) {
+                    for y in (0..<self.y) {
+                        let h = height(x: x, y: y)
+                        if height(x: x - 1, y: y) <= h { continue }
+                        if height(x: x + 1, y: y) <= h { continue }
+                        if height(x: x, y: y - 1) <= h { continue }
+                        if height(x: x, y: y + 1) <= h { continue }
+                        count += 1
+                        basins[x + self.x * y] = count
+                    }
+                }
+
+                var changed = true
+                while changed {
+                    changed = false
+                    for x in (0..<self.x) {
+                        for y in (0..<self.y) {
+                            if height(x: x, y: y) == 9 { continue }
+                            if basins[x + y * self.x] != 0 { continue }
+                            for delta in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+                                if height(x: x + delta.0, y: y + delta.1) == Int.max { continue }
+                                let adjacent = basins[x + delta.0 + self.x * (y + delta.1)]
+                                if adjacent != 0 {
+                                    changed = true
+                                    basins[x + y * self.x] = adjacent
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return basins
+            }
+
+            func prettify(_ arr: [Int]) {
+                precondition(arr.count == self.x * self.y)
+                for row in (0..<self.y) {
+                    print(arr[row * self.x..<(row+1) * self.x])
+                }
+            }
         }
 
         func run() {
@@ -735,7 +779,13 @@ extension Script {
                 y: input.count,
                 heights: heights
             )
-            print(map.risk())
+//            print(map.risk())
+//            map.prettify(map.basins())
+
+            let basins = map.basins()
+            let counts = Dictionary(grouping: basins, by: { $0 })
+                .mapValues { $0.count }
+            print(counts.sorted(by: { $0.value > $1.value }))
         }
     }
 }

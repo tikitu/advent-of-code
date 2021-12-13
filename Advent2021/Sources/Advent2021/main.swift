@@ -8,7 +8,7 @@ struct Script: ParsableCommand {
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
-                      Day11.self]
+                      Day11.self, Day12.self]
     )
 }
 
@@ -1030,6 +1030,106 @@ extension Script {
             }
             map.prettyPrint()
             print(flashes)
+        }
+    }
+}
+
+extension Script {
+    struct Day12: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "12"
+        )
+
+        struct Graph {
+            let edges: [String: Set<String>]
+
+            init(spec: [String]) {
+                self.init(spec: spec
+                    .map { $0.split(separator: "-") }
+                    .map { (String($0[0]), String($0[1])) })
+            }
+
+            init(spec: [(String, String)]) {
+                var edges: [String: Set<String>] = [:]
+                for pair in spec {
+                    if pair.0 != "end" && pair.1 != "start" {
+                        edges[pair.0, default: Set()].insert(pair.1)
+                    }
+                    if pair.1 != "end" && pair.0 != "start" {
+                        edges[pair.1, default: Set()].insert(pair.0)
+                    }
+                }
+                self.edges = edges
+            }
+
+            func paths(
+                from prefix: [String], to end: String,
+                usedOurOneSmallVisit: Bool
+            ) -> [[String]] {
+                let room = prefix.last!
+                if room == end {
+                    return [prefix]
+                }
+                var result: [[String]] = []
+                for next in edges[room]! {
+                    if next.allSatisfy({ $0.isLowercase }) && prefix.contains(next) {
+                        // returning to a small cave: is this allowed?
+                        if usedOurOneSmallVisit {
+                            continue
+                        } else {
+                            result.append(
+                                contentsOf: paths(
+                                    from: prefix + [next], to: end,
+                                    usedOurOneSmallVisit: true))
+                        }
+                    } else {
+                        result.append(
+                            contentsOf: paths(
+                                from: prefix + [next], to: end,
+                                usedOurOneSmallVisit: usedOurOneSmallVisit))
+                    }
+                }
+                return result
+            }
+        }
+
+        func run() {
+            let input: [String] = """
+qi-UD
+jt-br
+wb-TF
+VO-aa
+UD-aa
+br-end
+end-HA
+qi-br
+br-HA
+UD-start
+TF-qi
+br-hf
+VO-hf
+start-qi
+end-aa
+hf-HA
+hf-UD
+aa-hf
+TF-hf
+VO-start
+wb-aa
+UD-wb
+KX-wb
+qi-VO
+br-TF
+""".split(separator: "\n").map(String.init)
+
+            let graph = Graph(spec: input)
+            print(graph)
+
+            let paths = graph.paths(from: ["start"], to: "end", usedOurOneSmallVisit: false)
+            for path in paths {
+                print(path)
+            }
+            print(paths.count)
         }
     }
 }

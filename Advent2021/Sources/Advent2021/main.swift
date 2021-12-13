@@ -8,7 +8,7 @@ struct Script: ParsableCommand {
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
-                      Day11.self, Day12.self]
+                      Day11.self, Day12.self, Day13.self]
     )
 }
 
@@ -1130,6 +1130,85 @@ br-TF
                 print(path)
             }
             print(paths.count)
+        }
+    }
+}
+
+extension Script {
+    struct Day13: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "13"
+        )
+
+        struct Point: Equatable, Hashable {
+            let x: Int
+            let y: Int
+        }
+
+        func run() {
+            let lines = readLines()
+//            let lines = """
+//6,10
+//0,14
+//9,10
+//0,3
+//10,4
+//4,11
+//6,0
+//6,12
+//4,1
+//0,13
+//10,12
+//3,4
+//3,0
+//8,4
+//1,10
+//2,14
+//8,10
+//9,0
+//
+//fold along y=7
+//fold along x=5
+//""".split(separator: "\n").map(String.init)
+            let coords = lines.filter { $0.contains(",") }
+                .map { $0.split(separator: ",") }
+                .map { Point(x: Int($0[0])!, y: Int($0[1])!) }
+            let folds = lines.filter { $0.starts(with: "fold") }
+
+
+            let result = folds.reduce(coords) { coords, fold in apply(fold: fold, to: coords) }
+            print(result)
+
+            let reduced = Set(result).sorted(by: { ($0.y < $1.y || ($0.y == $1.y && $0.x < $1.x)) })
+            print(reduced)
+
+            var x = -1
+            var y = -1
+            for point in reduced {
+                while point.y > y { print(); x = -1; y += 1 }
+                while point.x > x { print(".", terminator: ""); x += 1 }
+                print("#", terminator: "")
+                x += 1
+            }
+        }
+
+        func apply(fold: String, to coords: [Point]) -> [Point] {
+            let split = fold.split(separator: "=")
+            let axis = split[0]
+            let point = Int(split[1])!
+
+            return coords.map { coord in
+                switch axis {
+                case "fold along x":
+                    return Point(x: coord.x > point ? point - (coord.x - point) : coord.x,
+                                 y: coord.y)
+                case "fold along y":
+                    return Point(x: coord.x,
+                                 y: coord.y > point ? point - (coord.y - point) : coord.y)
+                default:
+                    preconditionFailure("bad fold instruction \(axis)")
+                }
+            }
         }
     }
 }

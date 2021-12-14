@@ -8,7 +8,7 @@ struct Script: ParsableCommand {
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
-                      Day11.self, Day12.self, Day13.self]
+                      Day11.self, Day12.self, Day13.self, Day14.self]
     )
 }
 
@@ -1209,6 +1209,164 @@ extension Script {
                     preconditionFailure("bad fold instruction \(axis)")
                 }
             }
+        }
+    }
+}
+
+extension Script {
+    struct Day14: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "14"
+        )
+
+        func run() {
+            let _ = """
+NNCB
+
+CH -> B
+HH -> N
+CB -> H
+NH -> C
+HB -> C
+HC -> B
+HN -> C
+NN -> C
+BH -> H
+NC -> B
+NB -> B
+BN -> B
+BB -> N
+BC -> B
+CC -> N
+CN -> C
+""".split(separator: "\n").map(String.init)
+
+            let input = readLines()
+            let template = input.filter { !$0.contains("-") }.filter { !$0.isEmpty }.first!
+            let rules: [String: Character] = Dictionary(
+                uniqueKeysWithValues: input.filter { $0.contains("-") }.map {
+                    let chars = Array($0)
+                    return ("\(chars[0])\(chars[1])", chars[6])
+                }
+            )
+            print(template, rules)
+
+//            var polymer = Array(template)
+//            for i in (0..<40) {
+//                print(i)
+//                //print("\(i): \(polymer)")
+//                step(input: &polymer, rules: rules)
+//            }
+//
+//
+//            let counts: [Character: Int] = polymer.reduce(into: [:]) { counts, char in
+//                counts[char, default: 0] += 1
+//            }
+//            print(counts)
+//            let all = counts.values.sorted()
+//            print(all.last! - all.first!)
+
+            let polymer = LinkedList(from: template)
+            for i in (0..<40) {
+                //print("\(i): ", terminator: "")
+                //polymer.prettyPrint()
+                print(i)
+                polymer.apply(rules: rules)
+            }
+            let counts = polymer.counts()
+            print(counts)
+            let all = counts.values.sorted()
+            print(all.last! - all.first!)
+        }
+
+        // This is too inefficient for 40 steps BY FAR
+        func step(input: inout [Character], rules: [String: Character]) {
+            input.reserveCapacity(Int(Double(input.count) * 1.5))
+            var inserts = zip(input, Array(input.dropFirst())).map { (a, b) in
+                rules["\(a)\(b)"]
+            }
+            inserts.append(nil)
+            input = zip(input, inserts).flatMap { [$0, $1].compactMap { $0} }
+        }
+    }
+}
+
+public class LinkedList {
+    private var nodes: [Node] = Array(repeating: Node(char: ".", next: nil), count: 221146646)
+    var firstFreeNode: Int = 0
+
+    fileprivate var head: Int?
+    private var tail: Int?
+
+    public var isEmpty: Bool {
+        return head == nil
+    }
+
+    public var first: Int? {
+        return head
+    }
+
+    public var last: Int? {
+        return tail
+    }
+
+    func newNode(char: Character, next: Int?) -> Int {
+        nodes[firstFreeNode].char = char
+        nodes[firstFreeNode].next = next
+        firstFreeNode += 1
+        return firstFreeNode - 1
+    }
+
+    init(from string: String) {
+        var next: Int?
+        for char in string.reversed() {
+            let node = newNode(char: char, next: next)
+            if next == nil {
+                tail = node
+            }
+            next = node
+        }
+        head = next
+    }
+
+    func apply(rules: [String: Character]) {
+        var first: Int? = head
+        var second: Int? = nodes[head!].next
+
+        while second != nil {
+            if let insert = rules["\(nodes[first!].char)\(nodes[second!].char)"] {
+                nodes[first!].next = newNode(char: insert, next: second)
+            }
+            first = second
+            second = nodes[second!].next
+        }
+    }
+
+    func prettyPrint() {
+        var node = first
+        while node != nil {
+            print(nodes[node!].char, terminator: "")
+            node = nodes[node!].next
+        }
+        print()
+    }
+
+    func counts() -> [Character: Int] {
+        var result: [Character: Int] = [:]
+        var node = first
+        while node != nil {
+            result[nodes[node!].char, default: 0] += 1
+            node = nodes[node!].next
+        }
+        return result
+    }
+
+    public struct Node {
+        var next: Int?
+        var char: Character
+        init(char: Character, next: Int?) {
+            self.char = char
+            self.next = next
         }
     }
 }

@@ -1266,27 +1266,39 @@ CN -> C
 //            let all = counts.values.sorted()
 //            print(all.last! - all.first!)
 
-            let polymer = LinkedList(from: template)
-            for i in (0..<40) {
-                //print("\(i): ", terminator: "")
-                //polymer.prettyPrint()
-                print(i)
-                polymer.apply(rules: rules)
+            var rawCounts: [Character: UInt64] = template.reduce(into: [:]) { $0[$1, default: 0] += 1 }
+            print(rawCounts)
+            var polymer: [String: UInt64] = zip(template, template.dropFirst())
+                .map {
+                    "\($0)\($1)"
+                }
+                .reduce(into: [:]) { polymer, pair in
+                    polymer[pair, default: 0] += 1
+                }
+            for step in (0..<40) {
+                print(step)
+                var next = [String: UInt64]()
+                polymer
+                    .forEach { (pair, count) in
+                        if let insert = rules[pair] {
+                            guard let f = pair.first, let l = pair.last else {
+                                print("wth?!? [\(pair)]")
+                                fatalError()
+                            }
+                            rawCounts[insert, default: 0] += count
+                            next["\(f)\(insert)", default: 0] += count
+                            next["\(insert)\(l)", default: 0] += count
+                        } else {
+                            next[pair] = count
+                        }
+                    }
+                polymer = next
             }
-            let counts = polymer.counts()
-            print(counts)
-            let all = counts.values.sorted()
-            print(all.last! - all.first!)
-        }
-
-        // This is too inefficient for 40 steps BY FAR
-        func step(input: inout [Character], rules: [String: Character]) {
-            input.reserveCapacity(Int(Double(input.count) * 1.5))
-            var inserts = zip(input, Array(input.dropFirst())).map { (a, b) in
-                rules["\(a)\(b)"]
-            }
-            inserts.append(nil)
-            input = zip(input, inserts).flatMap { [$0, $1].compactMap { $0} }
+            print("huzzah!")
+//            print(rawCounts)
+            let sortedCounts = rawCounts.sorted(by: { $0.value < $1.value })
+            print(sortedCounts.count)
+            print(sortedCounts.last!.value - sortedCounts.first!.value)
         }
     }
 }

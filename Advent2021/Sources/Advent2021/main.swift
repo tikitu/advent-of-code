@@ -1,4 +1,5 @@
 import ArgumentParser
+import Collections
 
 struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
@@ -8,7 +9,7 @@ struct Script: ParsableCommand {
                       Day3_1.self, Day3_2.self, Day4_1.self, Day4_2.self,
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
-                      Day11.self, Day12.self, Day13.self, Day14.self]
+                      Day11.self, Day12.self, Day13.self, Day14.self, Day15.self]
     )
 }
 
@@ -1303,83 +1304,127 @@ CN -> C
     }
 }
 
-public class LinkedList {
-    private var nodes: [Node] = Array(repeating: Node(char: ".", next: nil), count: 221146646)
-    var firstFreeNode: Int = 0
+extension Script {
+    struct Day15: ParsableCommand {
+        static var configuration = CommandConfiguration(
+            commandName: "15"
+        )
 
-    fileprivate var head: Int?
-    private var tail: Int?
+        func run() {
+            let _ = """
+1163751742
+1381373672
+2136511328
+3694931569
+7463417111
+1319128137
+1359912421
+3125421639
+1293138521
+2311944581
+""".split(separator: "\n").map(String.init)
 
-    public var isEmpty: Bool {
-        return head == nil
-    }
+            let input = readLines()
 
-    public var first: Int? {
-        return head
-    }
+            let map = CaveMap(from: input)
+            var solutions = Array<Solution?>(repeating: nil, count: map.values.count)
 
-    public var last: Int? {
-        return tail
-    }
+            var front = Heap<Solution>()
 
-    func newNode(char: Character, next: Int?) -> Int {
-        nodes[firstFreeNode].char = char
-        nodes[firstFreeNode].next = next
-        firstFreeNode += 1
-        return firstFreeNode - 1
-    }
+            front.insert(Solution(cost: 0, path: [(0, 0)]))
 
-    init(from string: String) {
-        var next: Int?
-        for char in string.reversed() {
-            let node = newNode(char: char, next: next)
-            if next == nil {
-                tail = node
+            while let current = front.popMin() {
+                let pos = current.path.last!
+                if pos == (map.x - 1, map.y - 1) {
+                    print(current)
+                    print("total cost: \(current.cost)")
+                    break
+                }
+                for adjacent in [(pos.0 - 1, pos.1), (pos.0 + 1, pos.1),
+                                 (pos.0, pos.1 - 1), (pos.0, pos.1 + 1)] {
+                    if adjacent == (map.x - 1, map.y - 1) {
+                        print("*******")
+                        print(current)
+                        print("total cost: \(current.cost + map.value(x: adjacent.0, y: adjacent.1)!)")
+                        fatalError() // heheheh "break twice" wtf Swift
+                    }
+                    if let index = map.index(x: adjacent.0, y: adjacent.1) {
+                        let cost = map.values[index]
+                        if let alreadyVisited = solutions[index],
+                           alreadyVisited.cost <= current.cost + cost {
+                            continue
+                        }
+                        print("\(adjacent)", terminator: " ")
+                        var next = current
+                        next.cost += cost
+                        next.path.append(adjacent)
+                        solutions[index] = next
+                        front.insert(next)
+                    }
+                }
             }
-            next = node
         }
-        head = next
-    }
 
-    func apply(rules: [String: Character]) {
-        var first: Int? = head
-        var second: Int? = nodes[head!].next
-
-        while second != nil {
-            if let insert = rules["\(nodes[first!].char)\(nodes[second!].char)"] {
-                nodes[first!].next = newNode(char: insert, next: second)
+        struct Solution: Comparable {
+            static func < (lhs: Script.Day15.Solution, rhs: Script.Day15.Solution) -> Bool {
+                if lhs.cost < rhs.cost { return true }
+                if lhs.cost > rhs.cost { return false }
+                for (lhs, rhs) in zip(lhs.path, rhs.path) {
+                    if lhs.0 < rhs.0 { return true }
+                    if lhs.0 > rhs.0 { return false }
+                    if lhs.1 < rhs.1 { return true }
+                    if lhs.1 > rhs.1 { return false}
+                }
+                if lhs.path.count < rhs.path.count { return true }
+                if lhs.path.count > rhs.path.count { return false }
+                return false
             }
-            first = second
-            second = nodes[second!].next
+
+            static func == (lhs: Script.Day15.Solution, rhs: Script.Day15.Solution) -> Bool {
+                return lhs.cost == rhs.cost
+                && lhs.path.map { $0.0 } == rhs.path.map { $0.0 }
+                && lhs.path.map { $0.1 } == rhs.path.map { $0.1 }
+            }
+
+            var cost: Int
+            var path: [(Int, Int)]
         }
     }
+}
 
-    func prettyPrint() {
-        var node = first
-        while node != nil {
-            print(nodes[node!].char, terminator: "")
-            node = nodes[node!].next
-        }
-        print()
+
+struct CaveMap {
+    let x: Int
+    let y: Int
+    var values: [Int] // values.count = x * y
+
+    init(from strings: [String]) {
+        let values: [Int] = strings
+            .map { Array($0) }
+            .flatMap { $0.map { String($0) } } // wowza
+            .map { Int($0)! }
+        self.init(
+            x: strings.first!.count,
+            y: strings.count,
+            values: values
+        )
     }
 
-    func counts() -> [Character: Int] {
-        var result: [Character: Int] = [:]
-        var node = first
-        while node != nil {
-            result[nodes[node!].char, default: 0] += 1
-            node = nodes[node!].next
-        }
-        return result
+    init(x: Int, y: Int, values: [Int]) {
+        precondition(values.count == x * y)
+        self.x = x
+        self.y = y
+        self.values = values
     }
 
-    public struct Node {
-        var next: Int?
-        var char: Character
-        init(char: Character, next: Int?) {
-            self.char = char
-            self.next = next
-        }
+    func value(x: Int, y: Int) -> Int? {
+        return index(x:x, y: y).map { values[$0] }
+    }
+
+    func index(x: Int, y: Int) -> Int? {
+        if x < 0 || x >= self.x { return nil }
+        if y < 0 || y >= self.y { return nil }
+        return x + self.x * y
     }
 }
 

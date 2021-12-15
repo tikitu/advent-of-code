@@ -1326,7 +1326,22 @@ extension Script {
 
             let input = readLines()
 
-            let map = CaveMap(from: input)
+            let longH = input.map {
+                [$0,
+                 $0.bump(),
+                 $0.bump().bump(),
+                 $0.bump().bump().bump(),
+                 $0.bump().bump().bump().bump()].joined()
+            }
+            let longV = [
+                longH,
+                longH.bump(),
+                longH.bump().bump(),
+                longH.bump().bump().bump(),
+                longH.bump().bump().bump().bump()
+            ].flatMap { $0 }
+
+            let map = CaveMap(from: longV)
             var solutions = Array<Solution?>(repeating: nil, count: map.values.count)
 
             var front = Heap<Solution>()
@@ -1354,7 +1369,8 @@ extension Script {
                            alreadyVisited.cost <= current.cost + cost {
                             continue
                         }
-                        print("\(adjacent)", terminator: " ")
+                        if solutions[index] == nil { print("\(adjacent)", terminator: " ") }
+                        //print("\(adjacent)", terminator: " ")
                         var next = current
                         next.cost += cost
                         next.path.append(adjacent)
@@ -1392,6 +1408,32 @@ extension Script {
     }
 }
 
+extension String {
+    func bump() -> String {
+        return Array(self)
+            .map {
+                switch $0 {
+                case "1": return "2"
+                case "2": return "3"
+                case "3": return "4"
+                case "4": return "5"
+                case "5": return "6"
+                case "6": return "7"
+                case "7": return "8"
+                case "8": return "9"
+                case "9": return "1"
+                default: fatalError()
+                }
+            }
+            .joined(separator: "")
+    }
+}
+
+extension Array where Element == String {
+    func bump() -> [String] {
+        self.map { $0.bump() }
+    }
+}
 
 struct CaveMap {
     let x: Int

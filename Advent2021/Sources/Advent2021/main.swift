@@ -11,8 +11,116 @@ struct Script: ParsableCommand {
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
-                      Day16.self]
+                      Day16.self, Day17.self]
     )
+}
+
+extension Script {
+    struct Day17: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "17")
+
+        func run() {
+            //let target = (x: (20, 30), y:(-10, -5))
+            let target = (x: (70, 125), y: (-159, -121))
+
+            let minX = (1...)
+                .lazy
+                .map { ($0, ($0 * ($0 + 1)) / 2) }
+                .first(where: { $0.1 >= target.x.0 })!
+                .0
+            let maxX = target.x.1
+
+            let xs = (minX...maxX).filter {
+                var xV = $0
+                var x = 0
+                while xV > 0 {
+                    if Set(target.x.0...target.x.1).contains(x) {
+                        return true
+                    }
+                    x += xV
+                    xV -= 1
+                }
+                return false
+            }
+            print(xs, xs.count)
+
+            // free-falling at max velocity from 0 already goes past the target zone
+            let ys = (min(target.y.0, target.y.1)...abs(min(target.y.0, target.y.1)))
+                .filter {
+                    var yV = $0
+                    var y = 0
+                    while y >= min(target.y.0, target.y.1) {
+                        if Set(min(target.y.0, target.y.1)...max(target.y.0, target.y.1)).contains(y) { return true }
+                        y += yV
+                        yV -= 1
+                    }
+                    return false
+                }
+
+            print(ys.count)
+
+            var candidates = [(Int, (Int, Int))]()
+
+            for xV in xs {
+                var steps = 0
+                var minSteps = Int.max
+                var maxSteps = 0
+                var xV = xV
+                var x = 0
+                while xV > 0 && x <= target.x.1 {
+                    x += xV
+                    xV -= 1
+                    if Set(target.x.0...target.x.1).contains(x) {
+                        minSteps = min(minSteps, steps)
+                        maxSteps = max(maxSteps, steps)
+                    }
+                    steps += 1
+                }
+//                let ys = lazyYs
+//                    // free-falling from 0 would already jump past the target zone...
+//                    .prefix(while: { $0 <= abs(min(target.y.0, target.y.1)) })
+//                    // ... or, more complicated, the possible x-values don't land in target Y
+//                    .prefix(while: {
+//                        var yV = $0
+//                        var y = 0
+//                        for _ in (0...maxSteps) {
+//                            y += yV
+//                            yV -= 1
+//                        }
+//                        return y >= min(target.y.0, target.y.1)
+//                    })
+                for startXv in Set(xs) {
+                    for startYv in Set(ys) {
+                        var x = 0
+                        var y = 0
+                        var xV = startXv
+                        var yV = startYv
+                        var maxY = y
+                        var hitTarget = false
+                        while (x <= max(target.x.0, target.x.1) &&
+                               y >= min(target.y.0, target.y.1)) {
+                            maxY = max(maxY, y)
+                            if (target.x.0...target.x.1).contains(x) && (target.y.0...target.y.1).contains(y) {
+                                hitTarget = true
+                                break
+                            }
+                            x += xV
+                            y += yV
+                            xV = max(0, xV - 1)
+                            yV -= 1
+                        }
+                        if hitTarget {
+                            candidates.append((maxY, (startXv, startYv)))
+                        }
+                    }
+                }
+            }
+            // print(candidates)
+            print(candidates.map { $0.0 }.max()!)
+            // print(candidates.count)
+            print(Set(candidates.map { "\($0.1)" }).count)
+        }
+    }
 }
 
 extension Script {

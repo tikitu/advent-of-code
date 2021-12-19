@@ -23,9 +23,6 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Collections", package: "swift-collections")
             ]
-        ),
-        .testTarget(
-            name: "Advent2021Tests",
-            dependencies: []),
+        )
     ]
 )

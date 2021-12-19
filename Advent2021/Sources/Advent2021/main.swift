@@ -11,8 +11,268 @@ struct Script: ParsableCommand {
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
-                      Day16.self, Day17.self, Day18.self]
+                      Day16.self, Day17.self, Day18.self, Day19.self]
     )
+}
+
+extension Script {
+    struct Day19: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "19")
+
+        func run() {
+            print("=== Day 19 ===")
+
+            var scanners: [Set<Vector>] = []
+            var input = readLines()
+            while !input.isEmpty {
+                _ = input.removeFirst() // "scanner 1"
+                var scanner = Set<Vector>()
+                while !input.isEmpty && !input[0].isEmpty {
+                    scanner.insert(Vector(from: input.removeFirst()))
+                }
+                if !input.isEmpty {
+                    input.removeFirst() // empty line
+                }
+                scanners.append(scanner)
+            }
+            print(scanners)
+
+            let orientations = Matrix.orientations()
+            print("orientations: \(orientations.count)")
+
+            // for s_1 in scanners {
+            //   for s_2 in scanners.rest {
+            //       for orientation in s_2.oriented {
+            //         for beacon_1 in s_1 {
+            //           for beacon_2 in s_2 {
+            //             assume s_2 sees beacon_1 as beacon_2
+            //             does s_2 translated and oriented overlap with s_1 by 12 beacons?
+            //             does s_2 translated and oriented anti-overlap with s_1 by any beacons?
+            //             if (yes,no): write orientation+translation as a hope, and exit loops
+            //                  (owow that's not good...)
+            //         }
+            //       }
+            //    }
+            // }
+
+            print(scanners.map { $0.count })
+            var changed = true
+
+            var scannersFinal: Set<Vector> = [[0,0,0]] // we can cheat, they always merge with 0
+
+        SCANNER:
+            while scanners.count > 1 && changed {
+                changed = false
+
+                let scannersXorientations = scanners.map { scanner in
+                    orientations.map { orientation in
+                        Set(scanner.map { orientation * $0 })
+                    }
+                }
+
+            SEARCH:
+                for i_1 in (0..<scanners.count) {
+                    let scanner_1 = scanners[i_1]
+                    for i_2 in (i_1..<scanners.count) {
+                        if i_1 == i_2 { continue }
+                        print("scanners \(i_1) (\(scanner_1.count)), \(i_2) (\(scanners[i_2].count))")
+                        let scannerXorientation = scannersXorientations[i_2]
+                        for orientation in (0..<scannerXorientation.count) {
+                            let scanner_2 = scannerXorientation[orientation]
+                            for beacon_1 in scanner_1 {
+                                for beacon_2 in scanner_2 {
+                                    let trans_2_to_1 = beacon_1 - beacon_2
+                                    let scanner_2_to_1 = Set(scanner_2.map { $0 + trans_2_to_1 })
+                                    if scanner_2_to_1.intersection(scanner_1).count < 12 {
+                                        continue // not enough overlap
+                                    }
+                                    //                                if scanner_2_to_1.subtracting(scanner_1).first(where: { $0.within1000 }) != nil {
+                                    //                                    continue // scanner 2 sees something scanner 1 should see
+                                    //                                }
+                                    //                                let trans_1_to_2 = beacon_2 - beacon_1
+                                    //                                let scanner_1_to_2 = Set(scanner_1.map { $0 + trans_1_to_2})
+                                    //                                if scanner_1_to_2.subtracting(scanner_2).first(where: { $0.within1000 }) != nil {
+                                    //                                    continue // scanner 1 sees something scanner 2 should see
+                                    //                                }
+                                    scanners[i_1].formUnion(scanner_2_to_1)
+                                    scanners.remove(at: i_2)
+                                    scannersFinal.insert(trans_2_to_1)
+                                    changed = true
+
+                                    print("\(i_1) to \(i_2) with orientation \(orientation) and transform \(trans_2_to_1)")
+                                    // optimistically! assume this is *the* answer and move on...
+                                    break SEARCH
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            print(scanners.first!.count)
+            var maxManhattan = 0
+            for x in scannersFinal {
+                for y in scannersFinal {
+                    maxManhattan = max(maxManhattan, x.manhattan(from: y))
+                }
+            }
+            print("max manhattan \(maxManhattan)")
+        }
+    }
+}
+
+struct Vector: Equatable, Hashable, CustomStringConvertible {
+    var x: Int
+    var y: Int
+    var z: Int
+
+    func modify(f: (inout Vector) -> Void) -> Vector {
+        var v = self
+        f(&v)
+        return v
+    }
+}
+
+extension Vector {
+    var within1000: Bool {
+        return x >= -1000 && x <= 1000
+        && y >= -1000 && y <= 1000
+        && z >= -1000 && z <= 1000
+    }
+
+    func manhattan(from other: Vector) -> Int {
+        abs(x - other.x) + abs(y - other.y) + abs(z - other.z)
+    }
+}
+
+extension Vector {
+    var description: String { "\(x),\(y),\(z)" }
+
+    init(from s: String) {
+        let parsed = s.split(separator: ",").map { Int($0)! }
+        x = parsed[0]
+        y = parsed[1]
+        z = parsed[2]
+    }
+}
+
+extension Vector {
+    static func +(_ lhs: Vector, _ rhs: Vector) -> Vector {
+        Vector(x: lhs.x + rhs.x, y: lhs.y + rhs.y, z: lhs.z + rhs.z)
+    }
+
+    static func -(_ lhs: Vector, _ rhs: Vector) -> Vector {
+        Vector(x: lhs.x - rhs.x, y: lhs.y - rhs.y, z: lhs.z - rhs.z)
+    }
+
+    static func *(_ lhs: Vector, _ rhs: Vector) -> Int {
+        lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z
+    }
+
+    static func *(_ lhs: Matrix, _ rhs: Vector) -> Vector {
+        Vector(
+            x: lhs[row: 0] * rhs,
+            y: lhs[row: 1] * rhs,
+            z: lhs[row: 2] * rhs)
+    }
+}
+
+struct Matrix {
+    var x: Vector
+    var y: Vector
+    var z: Vector
+}
+
+extension Vector: ExpressibleByArrayLiteral {
+    init(arrayLiteral elements: Int...) {
+        x = elements[0]
+        y = elements[1]
+        z = elements[2]
+    }
+}
+
+extension Matrix: ExpressibleByArrayLiteral {
+    init(arrayLiteral elements: Vector...) {
+        x = elements[0]
+        y = elements[1]
+        z = elements[2]
+    }
+}
+
+extension Matrix {
+    subscript(row i: Int) -> Vector {
+        switch i {
+        case 0: return x
+        case 1: return y
+        case 2: return z
+        default: preconditionFailure("bad matrix subscript \(i)")
+        }
+    }
+
+    subscript(col i: Int) -> Vector {
+        switch i {
+        case 0: return Vector(x: x.x, y: y.x, z: z.x)
+        case 1: return Vector(x: x.y, y: y.y, z: z.y)
+        case 2: return Vector(x: x.z, y: y.z, z: z.z)
+        default: preconditionFailure("bad matrix subscript \(i)")
+        }
+    }
+
+    static func *(lhs: Matrix, rhs: Matrix) -> Matrix {
+        Matrix(
+            x: Vector(x: lhs[row: 0] * rhs[col: 0], y: lhs[row: 0] * rhs[col: 1], z: lhs[row: 0] * rhs[col: 2]),
+            y: Vector(x: lhs[row: 1] * rhs[col: 0], y: lhs[row: 1] * rhs[col: 1], z: lhs[row: 1] * rhs[col: 2]),
+            z: Vector(x: lhs[row: 2] * rhs[col: 0], y: lhs[row: 2] * rhs[col: 1], z: lhs[row: 2] * rhs[col: 2])
+        )
+    }
+}
+
+extension Matrix {
+    static func orientations() -> [Matrix] {
+        var result = [Matrix]()
+        for a: Matrix in [
+            [[1, 0, 0],
+             [0, 1, 0],
+             [0, 0, 1]],
+
+            [[0, 1, 0],
+             [0, 0, 1],
+             [1, 0, 0]],
+
+            [[0, 0, 1],
+             [1, 0, 0],
+             [0, 1, 0]]] {
+            for b: Matrix in [
+                [[ 1, 0, 0],
+                  [ 0, 1, 0],
+                  [ 0, 0, 1]],
+
+                 [[-1, 0, 0],
+                  [ 0,-1, 0],
+                  [ 0, 0, 1]],
+
+                 [[-1, 0, 0],
+                  [ 0, 1, 0],
+                  [ 0, 0,-1]],
+
+                 [[ 1, 0, 0],
+                  [ 0,-1, 0],
+                  [ 0, 0,-1]]
+            ] {
+                for c: Matrix in [
+                    [[ 1, 0, 0],
+                      [ 0, 1, 0],
+                      [ 0, 0, 1]],
+
+                     [[ 0, 0,-1],
+                      [ 0,-1, 0],
+                      [-1, 0, 0]]
+                ] {
+                    result.append(a * b * c)
+                }
+            }
+        }
+        return result
+    }
 }
 
 extension Script {
@@ -27,7 +287,7 @@ extension Script {
                 [[3,[2,[8,0]]],[9,[5,[4,[3,2]]]]]
             ] {
                 var exploded = s
-                exploded.explode(nested: 0)
+                _ = exploded.explode(nested: 0)
                 print("\(s.pretty) --> \(exploded.pretty)")
             }
 
@@ -182,7 +442,7 @@ extension Script {
         }
 
         mutating func reduceOnce() -> Bool {
-            if let didExplode = self.explode(nested: 0) { return true }
+            if self.explode(nested: 0) != nil { return true }
             return split()
         }
 

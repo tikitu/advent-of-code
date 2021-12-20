@@ -11,8 +11,173 @@ struct Script: ParsableCommand {
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
-                      Day16.self, Day17.self, Day18.self, Day19.self]
+                      Day16.self, Day17.self, Day18.self, Day19.self, Day20.self]
     )
+}
+
+extension Script {
+    struct Day20: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "20")
+
+        func run() {
+            let input = readLines()
+            let rule = input[0].map { $0 == "#" }
+            print(rule.count, " should be 512")
+
+            var image = Life(from: input[2...])
+            print(image.on.count)
+            image.on.prettyPrint()
+
+            print(image.value(of: [2, 2]))
+            print(rule.map { $0 ? "1" : "0" }.joined())
+
+
+            for i in (1...50) {
+                image.iterate(rule: rule)
+                print("\(i): \(image.on.count)")
+            }
+        }
+    }
+}
+
+struct Life {
+    var on = Set<Point>()
+    var off = Set<Point>()
+    var out = false
+
+    init(from rows: ArraySlice<String>) {
+        rows.enumerated().forEach { (y, row) in
+            row.enumerated().forEach { (x, char) in
+                if char == "#" {
+                    on.insert([x, y])
+                } else {
+                    off.insert([x, y])
+                }
+            }
+        }
+    }
+
+    func value(of point: Point) -> Int {
+        let result = point.neighbourhood.reduce(into: 0) { result, point in
+            result *= 2
+            if on.contains(point) { result += 1 }
+            else if out && !self.off.contains(point) { result += 1 }
+        }
+        //print(point, " in ", point.neighbourhood, " = ", result)
+        return result
+    }
+
+    mutating func iterate(rule: [Bool]) {
+        let candidates: Set<Point> = on.union(off).reduce(into: []) { result, point in
+            result.formUnion(point.neighbourhood)
+        }
+        var newOn = Set<Point>()
+        var newOff = Set<Point>()
+        candidates.forEach {
+            if rule[self.value(of: $0)] {
+                newOn.insert($0)
+            } else {
+                newOff.insert($0)
+            }
+        }
+        on = newOn
+        off = newOff
+        switch out {
+        case false:
+            out = rule[0]
+        case true:
+            out = rule[511]
+        }
+    }
+
+}
+
+extension Set where Element == Point {
+    func prettyPrint() {
+        let minX = self.map { $0.x }.min()!
+        let minY = self.map { $0.y }.min()!
+        var x = minX
+        var y = minY
+        self.sorted().forEach { point in
+            while y < point.y {
+                print()
+                y += 1
+                x = minX
+            }
+            while x < point.x {
+                print(".", terminator: "")
+                x += 1
+            }
+            print("#", terminator: "")
+            x += 1
+        }
+        print()
+    }
+}
+
+struct Point: Equatable, Hashable {
+    let x: Int
+    let y: Int
+}
+
+extension Point: CustomStringConvertible {
+    var description: String { "\(x),\(y)" }
+}
+
+extension Point: Comparable {
+    static func < (lhs: Point, rhs: Point) -> Bool {
+        if lhs.y < rhs.y { return true }
+        if lhs.y > rhs.y { return false }
+        return lhs.x < rhs.x
+    }
+}
+
+extension Point: ExpressibleByArrayLiteral {
+    init(arrayLiteral elements: Int...) {
+        x = elements[0]
+        y = elements[1]
+    }
+}
+
+extension Point {
+    var neighbourhood: [Point] {
+        [-1, 0, 1].flatMap { dy in // note the inversion!
+            [-1, 0, 1].map { dx in
+                [self.x + dx, self.y + dy] as Point
+            }
+        }
+    }
+//
+//    var farNeighbourhood: Set<Point> {
+//        Set(
+//            [-2, -1, 0, 1, 2].flatMap { x in
+//                [-2, -1, 0, 1, 2].map { y in
+//                    [self.x + x, self.y + y] as Point
+//                }
+//            }
+//        )
+//    }
+}
+
+extension Set where Element == Point {
+    func value(of point: Point) -> Int {
+        let result = point.neighbourhood.reduce(into: 0) { result, point in
+            result *= 2
+            if self.contains(point) { result += 1 }
+        }
+        print(point, " in ", point.neighbourhood, " = ", result, terminator: "")
+        return result
+    }
+    func iterate(rule: [Bool]) -> Set<Point> {
+        let candidates: Set<Point> = self.reduce(into: []) { result, point in
+            result.formUnion(point.neighbourhood)
+        }
+        return Set(candidates.sorted().filter {
+            let result = rule[self.value(of: $0)]
+            print(" in: ", result)
+            return result
+        })
+    }
 }
 
 extension Script {

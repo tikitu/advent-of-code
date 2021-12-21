@@ -11,8 +11,69 @@ struct Script: ParsableCommand {
                       Day5_1.self, Day5_2.self, Day6_1.self, Day7_1.self,
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
-                      Day16.self, Day17.self, Day18.self, Day19.self, Day20.self]
+                      Day16.self, Day17.self, Day18.self, Day19.self, Day20.self,
+                      Day21_1.self, Day21_2.self]
     )
+}
+
+extension Script {
+    struct Day21_2: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "21_2")
+
+        func run() {
+
+        }
+    }
+    
+    struct Day21_1: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "21_1")
+
+        func run() {
+            let input = [
+                "Player 1 starting position: 8",
+                "Player 2 starting position: 4"
+            ]
+            var positions = input.map {
+                UInt8($0.split(separator: ":")[1].filter { $0.isNumber })!
+            }
+            var scores = positions.map { _ in 0 }
+            print(positions)
+
+            var count = 0
+            var die: UInt8 = 0
+        GAME:
+            while true {
+                for player in (0..<positions.count) {
+                    _ = positions[player].increment(by: die.increment(by: 1, limit: 100),
+                                                    limit: 10)
+                    _ = positions[player].increment(by: die.increment(by: 1, limit: 100),
+                                                    limit: 10)
+                    _ = positions[player].increment(by: die.increment(by: 1, limit: 100),
+                                                    limit: 10)
+                    count += 3
+                    scores[player] += Int(positions[player])
+                    if scores[player] >= 1000 {
+                        break GAME
+                    }
+                }
+            }
+            print("positions: \(positions)")
+            print("scores   : \(scores)")
+            print("die rolls: \(count)")
+
+            print("result \(Int(scores.min()!) * count)")
+        }
+    }
+}
+
+extension UInt8 {
+    mutating func increment(by value: UInt8, limit: UInt8) -> UInt8 {
+        self += value
+        while self > limit {
+            self -= limit
+        }
+        return self
+    }
 }
 
 extension Script {

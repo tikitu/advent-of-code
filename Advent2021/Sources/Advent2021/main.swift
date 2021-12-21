@@ -21,10 +21,80 @@ extension Script {
         static var configuration = CommandConfiguration(commandName: "21_2")
 
         func run() {
+            var universe: [Game: Int] = [
+                Game(score_0: 0, score_1: 0, position_0: 8, position_1: 4): 1
+            ]
+            var wins_0 = 0
+            var wins_1 = 0
 
+            let rolls: [UInt8: Int] = Dictionary(
+                // gah, Vector array-init overloads are interfering!!!
+                grouping: ([1 as UInt8, 2, 3] as [UInt8]).flatMap { a in
+                    [1 as UInt8, 2, 3].flatMap { b in
+                        [1 as UInt8, 2, 3].map { c in
+                            (a+b+c) as UInt8
+                        }
+                    }
+                },
+                by: { $0 })
+                .mapValues(\.count)
+            print("possible rolls: \(rolls)")
+
+            var rounds = 0
+            while !universe.isEmpty {
+                print(".", terminator: "")
+                rounds += 1
+                if rounds >= 10 {
+                    print("")
+                    rounds = 0
+                }
+                let snapshot = universe
+                universe = [Game: Int]()
+                universe.reserveCapacity(snapshot.count)
+
+                for (game, count) in snapshot {
+                    for (roll_0, roll_0_count) in rolls {
+                        var game_0 = game
+                        game_0.applyPlayer0(roll: roll_0)
+                        if game_0.score_0 >= 21 {
+                            wins_0 += (count * roll_0_count)
+                            continue
+                        }
+                        for (roll_1, roll_1_count) in rolls {
+                            var game_1 = game_0
+                            game_1.applyPlayer1(roll: roll_1)
+                            if game_1.score_1 >= 21 {
+                                wins_1 += (count * roll_0_count * roll_1_count)
+                                continue
+                            }
+                            universe[game_1, default: 0] += (count * roll_0_count * roll_1_count)
+                        }
+                    }
+                }
+            }
+            print("wins 0: \(wins_0)")
+            print("wins 1: \(wins_1)")
+            print("winner: \(max(wins_0, wins_1))")
         }
     }
-    
+
+    struct Game: Equatable, Hashable {
+        var score_0: UInt8
+        var score_1: UInt8
+        var position_0: UInt8
+        var position_1: UInt8
+
+        mutating func applyPlayer0(roll: UInt8) {
+            _ = position_0.increment(by: roll, limit: 10)
+            score_0 += position_0
+        }
+
+        mutating func applyPlayer1(roll: UInt8) {
+            _ = position_1.increment(by: roll, limit: 10)
+            score_1 += position_1
+        }
+    }
+
     struct Day21_1: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "21_1")
 

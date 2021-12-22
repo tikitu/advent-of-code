@@ -12,8 +12,58 @@ struct Script: ParsableCommand {
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
                       Day16.self, Day17.self, Day18.self, Day19.self, Day20.self,
-                      Day21_1.self, Day21_2.self]
+                      Day21_1.self, Day21_2.self, Day22_1.self]
     )
+}
+
+extension Script {
+    struct Day22_1: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "22_1")
+
+        func run() {
+            let input = readLines().map(Cuboid.init(from:))
+
+            let overlaps = input.filter {
+                (-50...50).overlaps($0.x) ||
+                (-50...50).overlaps($0.y) ||
+                (-50...50).overlaps($0.z)
+            }.reversed()
+            var on = 0
+            for x in (-50...50) {
+                for y in (-50...50) {
+                    for z in (-50...50) {
+                        if let latest = overlaps.first(
+                            where: {
+                                $0.x.contains(x) && $0.y.contains(y) && $0.z.contains(z)
+                            }),
+                           latest.on {
+                            on += 1
+                        }
+                    }
+                }
+            }
+            print(on)
+        }
+    }
+}
+
+struct Cuboid {
+    let x: ClosedRange<Int>
+    let y: ClosedRange<Int>
+    let z: ClosedRange<Int>
+    let on: Bool
+
+    init(from string: String) {
+        on = string.split(separator: " ")[0] == "on"
+        let cuboid = string.split(separator: " ")[1]
+            .split(separator: ",")
+            .map { $0.dropFirst(2) }
+            .map { $0.split(separator: ".", omittingEmptySubsequences: true)}
+            .map { $0.map { Int($0)! } }
+        x = ClosedRange(uncheckedBounds: (cuboid[0].min()!, cuboid[0].max()!))
+        y = ClosedRange(uncheckedBounds: (cuboid[1].min()!, cuboid[1].max()!))
+        z = ClosedRange(uncheckedBounds: (cuboid[2].min()!, cuboid[2].max()!))
+    }
 }
 
 extension Script {

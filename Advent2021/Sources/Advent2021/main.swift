@@ -12,21 +12,48 @@ struct Script: ParsableCommand {
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
                       Day16.self, Day17.self, Day18.self, Day19.self, Day20.self,
-                      Day21_1.self, Day21_2.self, Day22_1.self]
+                      Day21_1.self, Day21_2.self, Day22_1.self, Day22_2.self]
     )
 }
 
 extension Script {
+    struct Day22_2: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "22_2")
+
+        func run() {
+            let c1 = Instruction22(from: "on x=10..12,y=10..12,z=10..12").cuboid
+            let c2 = Instruction22(from: "on x=11..13,y=11..13,z=11..13").cuboid
+            print(c1)
+            print(c2)
+            print(c2.subtracting(c1))
+            print(c2.subtracting(c1).map { $0.count }.reduce(0, +))
+
+            let input = readLines().map(Instruction22.init(from:))
+            var reactor = Reactor(on: [])
+            for (i, instruction) in input.enumerated() {
+                switch instruction.on {
+                case true:
+                    reactor.turn(on: instruction.cuboid)
+                case false:
+                    reactor.turn(off: instruction.cuboid)
+                }
+                print("\(i): \(reactor.on.count) / \(reactor.count)")
+            }
+            print("===done===")
+            print("\(reactor.on.count) / \(reactor.count)")
+        }
+    }
+
     struct Day22_1: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "22_1")
 
         func run() {
-            let input = readLines().map(Cuboid.init(from:))
+            let input = readLines().map(Instruction22.init(from:))
 
             let overlaps = input.filter {
-                (-50...50).overlaps($0.x) ||
-                (-50...50).overlaps($0.y) ||
-                (-50...50).overlaps($0.z)
+                (-50...50).overlaps($0.cuboid.x) ||
+                (-50...50).overlaps($0.cuboid.y) ||
+                (-50...50).overlaps($0.cuboid.z)
             }.reversed()
             var on = 0
             for x in (-50...50) {
@@ -34,7 +61,9 @@ extension Script {
                     for z in (-50...50) {
                         if let latest = overlaps.first(
                             where: {
-                                $0.x.contains(x) && $0.y.contains(y) && $0.z.contains(z)
+                                $0.cuboid.x.contains(x)
+                                && $0.cuboid.y.contains(y)
+                                && $0.cuboid.z.contains(z)
                             }),
                            latest.on {
                             on += 1
@@ -47,10 +76,93 @@ extension Script {
     }
 }
 
-struct Cuboid {
+struct Reactor {
+    var on: Set<Cuboid> // invariant: they do not overlap
+    var count: Int { on.map(\.count).reduce(0, +) }
+
+    mutating func turn(on newOn: Cuboid) {
+        self.on = on.reduce(into: [newOn]) { result, oldOn in
+            result.formUnion(oldOn.subtracting(newOn))
+        }
+    }
+
+    mutating func turn(off newOff: Cuboid) {
+        self.on = on.reduce(into: []) { result, oldOn in
+            result.formUnion(oldOn.subtracting(newOff))
+        }
+    }
+}
+
+
+struct Cuboid: Equatable, Hashable {
     let x: ClosedRange<Int>
     let y: ClosedRange<Int>
     let z: ClosedRange<Int>
+
+    var count: Int {
+        x.count * y.count * z.count
+    }
+
+    func overlaps(_ other: Cuboid) -> Bool {
+        return x.overlaps(other.x) && y.overlaps(other.y) && z.overlaps(other.z)
+    }
+
+    /**
+     * Return a set of non-overlapping cuboids collectively covering all cubes in `self` that are not in `other`.
+     */
+    func subtracting(_ other: Cuboid) -> Set<Cuboid> {
+        guard self.overlaps(other) else { return [self] }
+        return self.union(with: other).filter { !$0.overlaps(other) }
+    }
+
+    func union(with other: Cuboid) -> Set<Cuboid> {
+        guard self.overlaps(other) else { return [self, other] }
+        let xs = x.union(with: other.x)
+        let ys = y.union(with: other.y)
+        let zs = z.union(with: other.z)
+        return Set(
+            xs.flatMap { x in
+                ys.flatMap { y in
+                    zs.map { z in
+                        Cuboid(x: x, y: y, z: z)
+                    }
+                }
+            }
+                .filter { $0.overlaps(self) || $0.overlaps(other) }
+        )
+    }
+}
+
+extension ClosedRange where Element == Int {
+    /**
+     * Return a list of ranges that cover all elements in `self` that do not appear in `other`. Can be empty!
+     */
+    func subtracting(_ other: ClosedRange<Int>) -> [ClosedRange<Int>] {
+        guard !self.overlaps(other) else { return [self] }
+        return union(with: other).filter { !$0.overlaps(other) }
+    }
+
+    func union(with other: ClosedRange<Int>) -> [ClosedRange<Int>] {
+        precondition(self.overlaps(other))
+        let (one, two) = self.lowerBound < other.lowerBound ? (self, other) : (other, self)
+        var result = [ClosedRange<Int>]()
+        if two.lowerBound > one.lowerBound {
+            result.append((one.lowerBound...two.lowerBound - 1))
+        }
+        result.append(two.lowerBound...Swift.min(one.upperBound, two.upperBound))
+        if one.upperBound != two.upperBound {
+            result.append((Swift.min(one.upperBound, two.upperBound) + 1...Swift.max(one.upperBound, two.upperBound)))
+        }
+        return result
+    }
+}
+
+extension Cuboid: CustomStringConvertible {
+    var description: String { "x=\(x),y=\(y),z=\(z)"}
+}
+
+struct Instruction22 {
+    let cuboid: Cuboid
     let on: Bool
 
     init(from string: String) {
@@ -60,9 +172,11 @@ struct Cuboid {
             .map { $0.dropFirst(2) }
             .map { $0.split(separator: ".", omittingEmptySubsequences: true)}
             .map { $0.map { Int($0)! } }
-        x = ClosedRange(uncheckedBounds: (cuboid[0].min()!, cuboid[0].max()!))
-        y = ClosedRange(uncheckedBounds: (cuboid[1].min()!, cuboid[1].max()!))
-        z = ClosedRange(uncheckedBounds: (cuboid[2].min()!, cuboid[2].max()!))
+        self.cuboid = Cuboid(
+            x: ClosedRange(uncheckedBounds: (cuboid[0].min()!, cuboid[0].max()!)),
+            y: ClosedRange(uncheckedBounds: (cuboid[1].min()!, cuboid[1].max()!)),
+            z: ClosedRange(uncheckedBounds: (cuboid[2].min()!, cuboid[2].max()!))
+        )
     }
 }
 

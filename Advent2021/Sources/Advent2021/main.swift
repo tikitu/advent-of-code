@@ -12,8 +12,348 @@ struct Script: ParsableCommand {
                       Day8_1.self, Day8_2.self, Day9_1.self, Day10.self,
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
                       Day16.self, Day17.self, Day18.self, Day19.self, Day20.self,
-                      Day21_1.self, Day21_2.self, Day22_1.self, Day22_2.self]
+                      Day21_1.self, Day21_2.self, Day22_1.self, Day22_2.self,
+                      Day23.self]
     )
+}
+
+extension Script {
+    struct Day23: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "23")
+
+        func run() {
+            let input = """
+            #############
+            #...........#
+            ###B#D#C#A###
+              #C#D#B#A#
+              #########
+            """
+            let _ = """
+            #############
+            #...........#
+            ###B#C#B#D###
+              #A#D#C#A#
+              #########
+            """
+
+            let states = [
+                """
+        #############
+        #...........#
+        ###B#C#B#D###
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #...B.......#
+        ###B#C#.#D###
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #...B.......#
+        ###B#.#C#D###
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #...B.D.....#
+        ###B#.#C#D###
+          #A#.#C#A#
+          #########
+        """,
+                """
+        #############
+        #.....D.....#
+        ###B#.#C#D###
+          #A#B#C#A#
+          #########
+        """,
+                """
+        #############
+        #.....D.....#
+        ###.#B#C#D###
+          #A#B#C#A#
+          #########
+        """,
+                """
+        #############
+        #.....D.D.A.#
+        ###.#B#C#.###
+          #A#B#C#.#
+          #########
+        """,
+                """
+        #############
+        #.........A.#
+        ###.#B#C#D###
+          #A#B#C#D#
+          #########
+        """,
+                """
+        #############
+        #...........#
+        ###A#B#C#D###
+          #A#B#C#D#
+          #########
+        """
+            ].map { AmphipodState(from: $0) }
+
+            let broken = AmphipodState(from: """
+        #############
+        #...B.......#
+        ###B#.#C#D###
+          #A#D#C#A#
+          #########
+        """)
+            print(broken)
+            print()
+            broken.moves().map { $0.state }.prettyPrint()
+            print()
+            print(broken.corridors(of: .d, from: 1))
+
+            var queue = Heap<AmphipodMove>([AmphipodMove(state: AmphipodState(from: input), cost: 0)])
+            var costs = [AmphipodState: Int]()
+            var solutions = [AmphipodState: AmphipodState]()
+
+            while let next = queue.popMin() {
+//                if Set(states).contains(next.state) {
+//                    solutions.chain(from: next.state).prettyPrint()
+//                    print()
+//                }
+                if (queue.count % 100 == 0) {
+                    print("progress: \(queue.count) / \(costs.count)")
+                }
+                if next.state.allHome {
+                    print(next.state)
+                    print(next.cost)
+                    break
+                }
+                next.state.moves().forEach { move in
+                    var move = move
+                    move.cost += next.cost
+                    if costs[move.state, default: Int.max] > move.cost {
+                        costs[move.state] = move.cost
+                        solutions[move.state] = next.state
+                        queue.insert(move)
+                    }
+                }
+            }
+//            for step in solutions.chain(from: AmphipodState(houses: [[.a, .a], [.b, .b], [.c, .c], [.d, .d]])) {
+//                print(step)
+//                print(costs[step])
+//                print()
+//            }
+
+            print("DONE!")
+        }
+    }
+}
+
+extension Dictionary where Key == AmphipodState, Value == AmphipodState {
+    func chain(from state: AmphipodState?) -> [AmphipodState] {
+        if let state = state {
+            var tail = chain(from: self[state])
+            tail.insert(state, at: 0)
+            return tail
+        } else {
+            return []
+        }
+    }
+}
+
+extension Array where Element == AmphipodState {
+    func prettyPrint() {
+        let pretty = self
+            .map { $0.description }
+            .map { $0.split(separator: "\n") }
+        print([
+            pretty.map { $0[0] }.joined(separator: "  "),
+            pretty.map { $0[1] }.joined(separator: "  "),
+            pretty.map { $0[2] }.joined(separator: "  "),
+            pretty.map { $0[3] }.joined(separator: "  "),
+            pretty.map { $0[4] }.joined(separator: "  ")
+        ].joined(separator: "\n"))
+    }
+}
+
+struct AmphipodMove: Equatable, Hashable, Comparable, CustomStringConvertible {
+    var state: AmphipodState
+    var cost: Int
+
+    static func < (lhs: AmphipodMove, rhs: AmphipodMove) -> Bool {
+        if lhs.cost < rhs.cost { return true }
+        if lhs.cost > rhs.cost { return false }
+        return lhs.state < rhs.state
+    }
+
+    var description: String {
+        """
+        cost: \(cost)
+        \(state)
+        """
+    }
+}
+
+struct AmphipodState: Equatable, Hashable, CustomStringConvertible {
+    var corridor = Array<Amphipod?>(repeating: nil, count: 11)
+    var houses: [[Amphipod?]]
+
+    var description: String {
+        """
+        #############
+        #\(corridor.map { $0?.description ?? "." }.joined())#
+        ###\(houses[0][0]?.description ?? ".")#\(houses[1][0]?.description ?? ".")#\(houses[2][0]?.description ?? ".")#\(houses[3][0]?.description ?? ".")###
+        ###\(houses[0][1]?.description ?? ".")#\(houses[1][1]?.description ?? ".")#\(houses[2][1]?.description ?? ".")#\(houses[3][1]?.description ?? ".")###
+        #############
+        """
+    }
+
+    var allHome: Bool {
+        houses == [[.a, .a], [.b, .b], [.c, .c], [.d, .d]]
+    }
+
+    func moves() -> Set<AmphipodMove> {
+        var result = Set<AmphipodMove>()
+        // move an amphipod from a house into the corridor
+        for (i, house) in houses.enumerated() {
+            let owner = Amphipod.allCases[i]
+            // only the topmost can move
+            switch house.compactMap({ $0 }).first {
+            case nil: // nobody to move, we're done
+                continue
+            case let amphipod? where amphipod == owner:
+                // only move if it's the topmost and there's someone trapped underneath
+                guard house[0] != nil && house[1] != nil && house[1] != owner else { continue }
+                fallthrough
+            case let amphipod?:
+                var next = AmphipodMove(state: self, cost: 0)
+                let nextHouse = house[0] == nil ? [nil, nil] : [nil, house[1]]
+                next.state.houses[i] = nextHouse
+                let corridors = self.corridors(of: amphipod, from: i)
+                for (corridor, cost) in corridors {
+                    next.state.corridor = corridor
+                    next.cost = cost
+                    if house[0] == nil { next.cost += amphipod.cost(of: 1) } // moving from the bottom
+                    result.insert(next)
+                }
+            }
+        }
+        // move an amphipod from the corridor into their house
+        for (loc, amphipod) in corridor.enumerated() {
+            guard let amphipod = amphipod else { continue }
+            let house: Int
+            switch amphipod {
+            case .a: house = 0
+            case .b: house = 1
+            case .c: house = 2
+            case .d: house = 3
+            }
+            // moving into the house must not block anyone else
+            guard houses[house].allSatisfy({ $0 == nil || $0 == amphipod }) else { continue }
+            let houseLoc = [2, 4, 6, 8][house]
+            let pathway = corridor[min(loc, houseLoc)...max(loc, houseLoc)]
+            // the way to the door must be unblocked (this amphipod is the only one)
+            guard pathway.compactMap({$0}).count == 1 else { continue }
+            var next = AmphipodMove(state: self, cost: amphipod.cost(of: pathway))
+            next.state.corridor[loc] = nil
+            if houses[house][1] == nil {
+                next.cost += amphipod.cost(of: 1) // going to the bottom
+            }
+            next.state.put(amphipod: amphipod, in: house)
+            result.insert(next)
+        }
+        return result
+    }
+
+    /// Convenience only. You must check if you may and should do this!!!
+    mutating func put(amphipod: Amphipod, in house: Int) {
+        if houses[house][1] == nil {
+            houses[house][1] = amphipod
+        } else {
+            houses[house][0] = amphipod
+        }
+    }
+
+    func corridors(of amphipod: Amphipod, from house: Int) -> [([Amphipod?], Int)] {
+        let houseLoc = [2, 4, 6, 8][house]
+        let possibles = [0, 1, 3, 5, 7, 9, 10] // locations that can be moved to
+        return possibles.compactMap { loc in
+            let pathway = corridor[min(loc, houseLoc)...max(loc, houseLoc)]
+            if pathway.compactMap({ $0 }).isEmpty {
+                var next = corridor
+                next[loc] = amphipod
+                return (next, amphipod.cost(of: pathway))
+            } else {
+                return nil
+            }
+        }
+    }
+}
+
+extension AmphipodState {
+    init(from string: String) {
+        let lines = string.split(separator: "\n").map { String($0) }
+        self.corridor = lines[1].chars[1...11].map { Amphipod($0) }
+        self.houses = [
+            [Amphipod(lines[2].chars[3]), Amphipod(lines[3].chars[3])],
+            [Amphipod(lines[2].chars[5]), Amphipod(lines[3].chars[5])],
+            [Amphipod(lines[2].chars[7]), Amphipod(lines[3].chars[7])],
+            [Amphipod(lines[2].chars[9]), Amphipod(lines[3].chars[9])]
+        ]
+    }
+}
+
+extension String {
+    var chars: [Character] {
+        self.reduce(into: []) { $0.append($1) }
+    }
+}
+
+extension AmphipodState: Comparable {
+    static func < (lhs: AmphipodState, rhs: AmphipodState) -> Bool {
+        lhs.hashValue < rhs.hashValue
+    }
+}
+
+public enum Amphipod: String, Equatable, Hashable, CaseIterable { case a,b,c,d }
+extension Amphipod {
+    init?(_ character: Character) {
+        switch character {
+        case "A": self = .a
+        case "B": self = .b
+        case "C": self = .c
+        case "D": self = .d
+        default: return nil
+        }
+    }
+}
+extension Amphipod: Comparable {
+    public static func < (lhs: Amphipod, rhs: Amphipod) -> Bool {
+        allCases.firstIndex(of: lhs)! < allCases.firstIndex(of: rhs)!
+    }
+}
+extension Amphipod: CustomStringConvertible {
+    public var description: String { self.rawValue }
+}
+
+extension Amphipod {
+    func cost(of pathway: ArraySlice<Amphipod?>) -> Int {
+        cost(of: pathway.count)
+    }
+
+    func cost(of steps: Int) -> Int {
+        switch self {
+        case .a: return steps
+        case .b: return steps * 10
+        case .c: return steps * 100
+        case .d: return steps * 1000
+        }
+    }
 }
 
 extension Script {

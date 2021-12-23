@@ -26,13 +26,17 @@ extension Script {
             #############
             #...........#
             ###B#D#C#A###
+              #D#C#B#A#
+              #D#B#A#C#
               #C#D#B#A#
               #########
             """
-            let _ = """
+            let test = """
             #############
             #...........#
             ###B#C#B#D###
+              #D#C#B#A#
+              #D#B#A#C#
               #A#D#C#A#
               #########
             """
@@ -42,93 +46,150 @@ extension Script {
         #############
         #...........#
         ###B#C#B#D###
+          #D#C#B#A#
+          #D#B#A#C#
           #A#D#C#A#
-          #########
-        """,
-                """
-        #############
-        #...B.......#
-        ###B#C#.#D###
-          #A#D#C#A#
-          #########
-        """,
-                """
-        #############
-        #...B.......#
-        ###B#.#C#D###
-          #A#D#C#A#
-          #########
-        """,
-                """
-        #############
-        #...B.D.....#
-        ###B#.#C#D###
-          #A#.#C#A#
-          #########
-        """,
-                """
-        #############
-        #.....D.....#
-        ###B#.#C#D###
-          #A#B#C#A#
-          #########
-        """,
-                """
-        #############
-        #.....D.....#
-        ###.#B#C#D###
-          #A#B#C#A#
-          #########
-        """,
-                """
-        #############
-        #.....D.D.A.#
-        ###.#B#C#.###
-          #A#B#C#.#
-          #########
-        """,
-                """
-        #############
-        #.........A.#
-        ###.#B#C#D###
-          #A#B#C#D#
           #########
         """,
                 """
         #############
         #...........#
-        ###A#B#C#D###
-          #A#B#C#D#
-          #########
-        """
-            ].map { AmphipodState(from: $0) }
-
-            let broken = AmphipodState(from: """
-        #############
-        #...B.......#
-        ###B#.#C#D###
+        ###B#C#B#D###
+          #D#C#B#A#
+          #D#B#A#C#
           #A#D#C#A#
           #########
-        """)
-            print(broken)
-            print()
-            broken.moves().map { $0.state }.prettyPrint()
-            print()
-            print(broken.corridors(of: .d, from: 1))
+        """,
+                """
+        #############
+        #..........D#
+        ###B#C#B#.###
+          #D#C#B#A#
+          #D#B#A#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #A.........D#
+        ###B#C#B#.###
+          #D#C#B#.#
+          #D#B#A#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #A........BD#
+        ###B#C#.#.###
+          #D#C#B#.#
+          #D#B#A#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #A......B.BD#
+        ###B#C#.#.###
+          #D#C#.#.#
+          #D#B#A#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.....B.BD#
+        ###B#C#.#.###
+          #D#C#.#.#
+          #D#B#.#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.....B.BD#
+        ###B#.#.#.###
+          #D#C#.#.#
+          #D#B#C#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.....B.BD#
+        ###B#.#.#.###
+          #D#.#C#.#
+          #D#B#C#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA...B.B.BD#
+        ###B#.#.#.###
+          #D#.#C#.#
+          #D#.#C#C#
+          #A#D#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.D.B.B.BD#
+        ###B#.#.#.###
+          #D#.#C#.#
+          #D#.#C#C#
+          #A#.#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.D...B.BD#
+        ###B#.#.#.###
+          #D#.#C#.#
+          #D#.#C#C#
+          #A#B#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.D.....BD#
+        ###B#.#.#.###
+          #D#.#C#.#
+          #D#B#C#C#
+          #A#B#C#A#
+          #########
+        """,
+                """
+        #############
+        #AA.D......D#
+        ###B#.#.#.###
+          #D#B#C#.#
+          #D#B#C#C#
+          #A#B#C#A#
+          #########
+        """
+            ].map(AmphipodState.init(from:))
+            let statesSet = Set(states)
 
             var queue = Heap<AmphipodMove>([AmphipodMove(state: AmphipodState(from: input), cost: 0)])
             var costs = [AmphipodState: Int]()
             var solutions = [AmphipodState: AmphipodState]()
 
             while let next = queue.popMin() {
-//                if Set(states).contains(next.state) {
+                if queue.count % 1000 == 0 {
+                    print("progress \(queue.count) / \(solutions.count)")
+                }
+//                if statesSet.contains(next.state) {
 //                    solutions.chain(from: next.state).prettyPrint()
 //                    print()
 //                }
-                if (queue.count % 100 == 0) {
-                    print("progress: \(queue.count) / \(costs.count)")
-                }
                 if next.state.allHome {
+                    solutions.chain(from: next.state).reversed().forEach {
+                        print($0)
+                        print("==$", costs[$0]?.description ?? "<?>", "$==")
+                        print()
+                    }
+
                     print(next.state)
                     print(next.cost)
                     break
@@ -143,11 +204,6 @@ extension Script {
                     }
                 }
             }
-//            for step in solutions.chain(from: AmphipodState(houses: [[.a, .a], [.b, .b], [.c, .c], [.d, .d]])) {
-//                print(step)
-//                print(costs[step])
-//                print()
-//            }
 
             print("DONE!")
         }
@@ -176,7 +232,9 @@ extension Array where Element == AmphipodState {
             pretty.map { $0[1] }.joined(separator: "  "),
             pretty.map { $0[2] }.joined(separator: "  "),
             pretty.map { $0[3] }.joined(separator: "  "),
-            pretty.map { $0[4] }.joined(separator: "  ")
+            pretty.map { $0[4] }.joined(separator: "  "),
+            pretty.map { $0[5] }.joined(separator: "  "),
+            pretty.map { $0[6] }.joined(separator: "  ")
         ].joined(separator: "\n"))
     }
 }
@@ -209,12 +267,17 @@ struct AmphipodState: Equatable, Hashable, CustomStringConvertible {
         #\(corridor.map { $0?.description ?? "." }.joined())#
         ###\(houses[0][0]?.description ?? ".")#\(houses[1][0]?.description ?? ".")#\(houses[2][0]?.description ?? ".")#\(houses[3][0]?.description ?? ".")###
         ###\(houses[0][1]?.description ?? ".")#\(houses[1][1]?.description ?? ".")#\(houses[2][1]?.description ?? ".")#\(houses[3][1]?.description ?? ".")###
+        ###\(houses[0][2]?.description ?? ".")#\(houses[1][2]?.description ?? ".")#\(houses[2][2]?.description ?? ".")#\(houses[3][2]?.description ?? ".")###
+        ###\(houses[0][3]?.description ?? ".")#\(houses[1][3]?.description ?? ".")#\(houses[2][3]?.description ?? ".")#\(houses[3][3]?.description ?? ".")###
         #############
         """
     }
 
     var allHome: Bool {
-        houses == [[.a, .a], [.b, .b], [.c, .c], [.d, .d]]
+        houses[0].allSatisfy { $0 == .a }
+        && houses[1].allSatisfy { $0 == .b }
+        && houses[2].allSatisfy { $0 == .c }
+        && houses[3].allSatisfy { $0 == .d }
     }
 
     func moves() -> Set<AmphipodMove> {
@@ -227,18 +290,17 @@ struct AmphipodState: Equatable, Hashable, CustomStringConvertible {
             case nil: // nobody to move, we're done
                 continue
             case let amphipod? where amphipod == owner:
-                // only move if it's the topmost and there's someone trapped underneath
-                guard house[0] != nil && house[1] != nil && house[1] != owner else { continue }
+                // only move if on top of someone who wants to get out
+                guard !house.compactMap({ $0 }).filter({ $0 != owner }).isEmpty else { continue }
                 fallthrough
             case let amphipod?:
                 var next = AmphipodMove(state: self, cost: 0)
-                let nextHouse = house[0] == nil ? [nil, nil] : [nil, house[1]]
-                next.state.houses[i] = nextHouse
+                let costOfLeaving = amphipod.cost(ofLeaving: houses[i])
+                next.state.leave(house: i)
                 let corridors = self.corridors(of: amphipod, from: i)
                 for (corridor, cost) in corridors {
                     next.state.corridor = corridor
-                    next.cost = cost
-                    if house[0] == nil { next.cost += amphipod.cost(of: 1) } // moving from the bottom
+                    next.cost = cost + costOfLeaving
                     result.insert(next)
                 }
             }
@@ -261,9 +323,7 @@ struct AmphipodState: Equatable, Hashable, CustomStringConvertible {
             guard pathway.compactMap({$0}).count == 1 else { continue }
             var next = AmphipodMove(state: self, cost: amphipod.cost(of: pathway))
             next.state.corridor[loc] = nil
-            if houses[house][1] == nil {
-                next.cost += amphipod.cost(of: 1) // going to the bottom
-            }
+            next.cost += amphipod.cost(ofEntering: houses[house])
             next.state.put(amphipod: amphipod, in: house)
             result.insert(next)
         }
@@ -272,10 +332,17 @@ struct AmphipodState: Equatable, Hashable, CustomStringConvertible {
 
     /// Convenience only. You must check if you may and should do this!!!
     mutating func put(amphipod: Amphipod, in house: Int) {
-        if houses[house][1] == nil {
-            houses[house][1] = amphipod
-        } else {
-            houses[house][0] = amphipod
+        let i = houses[house].lastIndex(of: nil)!
+        houses[house][i] = amphipod
+    }
+
+    /// Convenience only! You must check if it goes somewhere
+    mutating func leave(house: Int) {
+        for i in houses[house].indices {
+            if houses[house][i] != nil {
+                houses[house][i] = nil
+                return
+            }
         }
     }
 
@@ -300,10 +367,10 @@ extension AmphipodState {
         let lines = string.split(separator: "\n").map { String($0) }
         self.corridor = lines[1].chars[1...11].map { Amphipod($0) }
         self.houses = [
-            [Amphipod(lines[2].chars[3]), Amphipod(lines[3].chars[3])],
-            [Amphipod(lines[2].chars[5]), Amphipod(lines[3].chars[5])],
-            [Amphipod(lines[2].chars[7]), Amphipod(lines[3].chars[7])],
-            [Amphipod(lines[2].chars[9]), Amphipod(lines[3].chars[9])]
+            [Amphipod(lines[2].chars[3]), Amphipod(lines[3].chars[3]), Amphipod(lines[4].chars[3]), Amphipod(lines[5].chars[3])],
+            [Amphipod(lines[2].chars[5]), Amphipod(lines[3].chars[5]), Amphipod(lines[4].chars[5]), Amphipod(lines[5].chars[5])],
+            [Amphipod(lines[2].chars[7]), Amphipod(lines[3].chars[7]), Amphipod(lines[4].chars[7]), Amphipod(lines[5].chars[7])],
+            [Amphipod(lines[2].chars[9]), Amphipod(lines[3].chars[9]), Amphipod(lines[4].chars[9]), Amphipod(lines[5].chars[9])]
         ]
     }
 }
@@ -344,6 +411,14 @@ extension Amphipod: CustomStringConvertible {
 extension Amphipod {
     func cost(of pathway: ArraySlice<Amphipod?>) -> Int {
         cost(of: pathway.count)
+    }
+
+    func cost(ofLeaving house: [Amphipod?]) -> Int {
+        cost(of: house.prefix(while: { $0 == nil }).count)
+    }
+
+    func cost(ofEntering house: [Amphipod?]) -> Int {
+        cost(of: house.prefix(while: { $0 == nil }).count - 1)
     }
 
     func cost(of steps: Int) -> Int {

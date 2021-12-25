@@ -13,8 +13,123 @@ struct Script: ParsableCommand {
                       Day11.self, Day12.self, Day13.self, Day14.self, Day15.self,
                       Day16.self, Day17.self, Day18.self, Day19.self, Day20.self,
                       Day21_1.self, Day21_2.self, Day22_1.self, Day22_2.self,
-                      Day23.self]
+                      Day23.self, Day25.self]
     )
+}
+
+extension Script {
+    struct Day25: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "25")
+
+        func run() {
+            let testInput = """
+            v...>>.vv>
+            .vv>>.vv..
+            >>.>v>...v
+            >>v>>.>.v.
+            v>v.vv.v..
+            >.>>..v...
+            .vv..>.>v.
+            v.v..>>v.v
+            ....v..v.>
+            """
+
+            let input = readLines().joined(separator: "\n")
+
+            var seabed = Seabed(from: input)
+            var changed = true
+            var steps = 0
+            while changed {
+                let previous = seabed
+                seabed.step()
+                steps += 1
+                if seabed == previous { break }
+            }
+            print("steps: \(steps)")
+        }
+    }
+}
+
+public struct Seabed: CustomStringConvertible, Equatable {
+    var value: [[Cucumber]]
+    let rows: Int
+    let cols: Int
+
+    init(value: [[Cucumber]]) {
+        self.value = value
+        self.rows = value.count
+        self.cols = value.first!.count
+    }
+
+    init(from string: String) {
+        self.init(
+            value: string
+                .split(separator: "\n")
+                .map { row in
+                    row.map { Cucumber(rawValue: String($0))! }
+                }
+            )
+    }
+
+    public var description: String {
+        value.map { $0.map { $0.rawValue }.joined() }.joined(separator: "\n")
+    }
+
+    func isEmpty(row: Int, col: Int) -> Bool {
+        value[row % rows][col % cols] == .none
+    }
+
+    mutating func set(row: Int, col: Int, to cucumber: Cucumber) {
+        value[row % rows][col % cols] = cucumber
+    }
+
+    mutating func step() {
+        var right = Seabed(
+            value: Array(repeating: Array(repeating: Cucumber.none, count: cols),
+                           count: rows)
+            )
+        for (row, cucumbers) in value.enumerated() {
+            for (col, cucumber) in cucumbers.enumerated() {
+                switch cucumber {
+                case .none: continue
+                case .right:
+                    if isEmpty(row: row, col: col + 1) {
+                        right.set(row: row, col: col + 1, to: .right)
+                    } else {
+                        right.set(row: row, col: col, to: .right)
+                    }
+                case .down: // do these next
+                    right.set(row: row, col: col, to: .down)
+                }
+            }
+        }
+        var result = Seabed(
+            value: Array(repeating: Array(repeating: Cucumber.none, count: cols),
+                           count: rows)
+            )
+        for (row, cucumbers) in right.value.enumerated() {
+            for (col, cucumber) in cucumbers.enumerated() {
+                switch cucumber {
+                case .none: continue
+                case .right: // already moved
+                    result.set(row: row, col: col, to: .right)
+                case .down:
+                    if right.isEmpty(row: row + 1, col: col) {
+                        result.set(row: row + 1, col: col, to: .down)
+                    } else {
+                        result.set(row: row, col: col, to: .down)
+                    }
+                }
+            }
+        }
+        self = result
+    }
+}
+
+public enum Cucumber: String, Equatable, Hashable {
+    case none = "."
+    case right = ">"
+    case down = "v"
 }
 
 extension Script {

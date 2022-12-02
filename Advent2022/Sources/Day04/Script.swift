@@ -1,5 +1,6 @@
 import ArgumentParser
 import Parsing
+import Utils
 
 // swift run Advent2022 01
 
@@ -16,6 +17,7 @@ struct Script: ParsableCommand {
 
         func run() {
             print("day 04 part 01")
+            // let input = readLines()
         }
     }
 
@@ -24,6 +26,7 @@ struct Script: ParsableCommand {
 
         func run() {
             print("day 04 part 02")
+            // let input = readLines()
         }
     }
 }

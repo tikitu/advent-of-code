@@ -8,6 +8,7 @@ let allDependencies: [Target.Dependency] = [
     .product(name: "Collections", package: "swift-collections"),
     .product(name: "Algorithms", package: "swift-algorithms"),
     .product(name: "Parsing", package: "swift-parsing"),
+    .target(name: "Utils")
 ]
 let package = Package(
     name: "Advent2022",
@@ -15,6 +16,7 @@ let package = Package(
         .macOS(.v12)
     ],
     products: [
+        .library(name: "Utils", targets: ["Utils"]),
         .executable(name: "Advent2022", targets: ["Advent2022"]),
         .executable(name: "Day03", targets: ["Day03"]),
         .executable(name: "Day04", targets: ["Day04"]),
@@ -49,6 +51,7 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
+        .target(name: "Utils"),
         .executableTarget(name: "Advent2022", dependencies: allDependencies),
         .executableTarget(name: "Day03", dependencies: allDependencies),
         .executableTarget(name: "Day04", dependencies: allDependencies),

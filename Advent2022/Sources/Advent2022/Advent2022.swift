@@ -1,4 +1,5 @@
 import ArgumentParser
+import Parsing
 
 // swift run Advent2022 01
 
@@ -7,8 +8,89 @@ struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Run Advent of Code 2022 programs",
         version: "0.0.1",
-        subcommands: [Day01.self, Day02.self]
+        subcommands: [Day01.self, Day02.self, Day02Parsing.self]
     )
+}
+
+extension Script {
+    struct Day02Parsing: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "02b")
+
+        func run() {
+            let input = readLines()
+
+            let parser = Parse(Game.init) {
+                Theirs.parser()
+                " "
+                Mine.parser()
+            }
+
+            let score = input
+                .map { try! parser.parse($0) }
+                .map { $0.score }
+                .reduce(0, +)
+            print("score: \(score)")
+
+            let parser2 = Parse {
+                Theirs.parser()
+                " "
+                Outcome.parser()
+            }.map { (theirs, outcome) in Game(theirs: theirs, mine: outcome.choice(for: theirs)) }
+
+            let score_2 = input
+                .map { try! parser2.parse($0) }
+                .map { $0.score }
+                .reduce(0, +)
+            print("score: \(score_2)")
+        }
+
+        struct Game {
+            let theirs: Theirs
+            let mine: Mine
+
+            var score: Int {
+                switch (mine, theirs) {
+                case (.rock, .rock), (.paper, .paper), (.scissors, .scissors):
+                    return 3 + mine.score
+                case (.rock, .paper), (.paper, .scissors), (.scissors, .rock):
+                    return mine.score
+                case (.paper, .rock), (.rock, .scissors), (.scissors, .paper):
+                    return 6 + mine.score
+                }
+            }
+        }
+        enum Theirs: String, CaseIterable {
+            case rock = "A"
+            case paper = "B"
+            case scissors = "C"
+        }
+        enum Mine: String, CaseIterable {
+            case rock = "X"
+            case paper = "Y"
+            case scissors = "Z"
+
+            var score: Int {
+                switch self {
+                case .rock: return 1
+                case .paper: return 2
+                case .scissors: return 3
+                }
+            }
+        }
+        enum Outcome: String, CaseIterable {
+            case lose = "X"
+            case draw = "Y"
+            case win = "Z"
+
+            func choice(for theirs: Theirs) -> Mine {
+                switch (self, theirs) {
+                case (.win, .rock), (.draw, .paper), (.lose, .scissors): return .paper
+                case (.win, .paper), (.draw, .scissors), (.lose, .rock): return .scissors
+                case (.win, .scissors), (.draw, .rock), (.lose, .paper): return .rock
+                }
+            }
+        }
+    }
 }
 
 extension Script {

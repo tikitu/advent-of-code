@@ -1,6 +1,7 @@
 import ArgumentParser
 import Parsing
 import Utils
+import Algorithms
 
 @main
 struct Script: ParsableCommand {
@@ -14,8 +15,19 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "01")
 
         func run() {
-            print("day 03 part 01")
-            // let input = readLines()
+            let lines = readLines()
+            let pairs = lines
+                .map { ($0[..<$0.index($0.startIndex, offsetBy: $0.count / 2)],
+                        $0[$0.index($0.startIndex, offsetBy: ($0.count/2))...]) }
+            let sets = pairs
+                .map { (Set($0.0), Set($0.1)) }
+            let misplaced = sets
+                .map { $0.0.intersection($0.1) }
+            let values = misplaced
+                .map { priorities[$0.first!]! }
+            let answer = values
+                .reduce(0, +)
+            print(answer)
         }
     }
 
@@ -23,8 +35,32 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "02")
 
         func run() {
-            print("day 03 part 02")
-            // let input = readLines()
+            let lines = readLines()
+            let groups = lines
+                .chunks(ofCount: 3)
+            let sets = groups
+                .map { $0.map { Set($0) } }
+            let shared = sets
+                .map { (group: [Set<Character>]) in group[0].intersection(group[1]).intersection(group[2]) }
+            let values = shared
+                .map { priorities[$0.first!]! }
+            let answer = values
+                .reduce(0, +)
+            print(answer)
         }
     }
+    static let priorities = {
+        let alphabet = "abcdefghijklmnopqrstuvwxyz"
+        let lowerPriorities = Dictionary(
+            uniqueKeysWithValues: alphabet.enumerated().map { (i, c) in
+                (c, i+1)
+            })
+        let upperPriorities = Dictionary(
+            uniqueKeysWithValues: alphabet.enumerated().map { (i, c) in
+                (c.uppercased().first!, i+27)
+            }
+        )
+        return lowerPriorities.merging(upperPriorities, uniquingKeysWith: { a, _ in a })
+    }()
+
 }

@@ -15,18 +15,61 @@ struct Script: ParsableCommand {
     struct Part1: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "01")
 
-        func run() {
+        func run() throws {
             print("day 04 part 01")
-            // let input = readLines()
+            let input = readLines()
+            let parser = Parse {
+                Parse {
+                    Int.parser()
+                    "-"
+                    Int.parser()
+                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                ","
+                Parse {
+                    Int.parser()
+                    "-"
+                    Int.parser()
+                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+            }
+            let parsed = try input.map(parser.parse)
+            let filtered = parsed
+                .filter {
+                    ($0.0.contains($0.1.minimum) && $0.0.contains($0.1.maximum!))
+                    ||
+                    ($0.1.contains($0.0.minimum) && $0.1.contains($0.0.maximum!))
+                }
+            let answer = filtered
+                .count
+            print(answer)
         }
     }
 
     struct Part2: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "02")
 
-        func run() {
+        func run() throws {
             print("day 04 part 02")
-            // let input = readLines()
+            let input = readLines()
+            let parser = Parse {
+                Parse {
+                    Int.parser()
+                    "-"
+                    Int.parser()
+                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                ","
+                Parse {
+                    Int.parser()
+                    "-"
+                    Int.parser()
+                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+            }
+            let parsed = try input.map(parser.parse)
+            let filtered = parsed
+                .filter { $0.0.overlaps($0.1) }
+            let answer = filtered
+                .count
+            print(answer)
         }
     }
 }
+

@@ -7,3 +7,9 @@ public func readLines() -> [String] {
     }
     return lines
 }
+
+public extension ClosedRange where Bound: Comparable {
+    func includes(_ other: ClosedRange) -> Bool {
+        return contains(other.lowerBound) && contains(other.upperBound)
+    }
+}

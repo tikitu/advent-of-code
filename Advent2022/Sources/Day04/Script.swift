@@ -23,20 +23,18 @@ struct Script: ParsableCommand {
                     Int.parser()
                     "-"
                     Int.parser()
-                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                }.map(ClosedRange.init(uncheckedBounds:))
                 ","
                 Parse {
                     Int.parser()
                     "-"
                     Int.parser()
-                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                }.map(ClosedRange.init(uncheckedBounds:))
             }
             let parsed = try input.map(parser.parse)
             let filtered = parsed
                 .filter {
-                    ($0.0.contains($0.1.minimum) && $0.0.contains($0.1.maximum!))
-                    ||
-                    ($0.1.contains($0.0.minimum) && $0.1.contains($0.0.maximum!))
+                    $0.0.includes($0.1) || $0.1.includes($0.0)
                 }
             let answer = filtered
                 .count
@@ -55,13 +53,13 @@ struct Script: ParsableCommand {
                     Int.parser()
                     "-"
                     Int.parser()
-                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                }.map(ClosedRange.init(uncheckedBounds:))
                 ","
                 Parse {
                     Int.parser()
                     "-"
                     Int.parser()
-                }.map { ClosedRange(uncheckedBounds: ($0.0, $0.1)) }
+                }.map(ClosedRange.init(uncheckedBounds:))
             }
             let parsed = try input.map(parser.parse)
             let filtered = parsed
@@ -72,4 +70,3 @@ struct Script: ParsableCommand {
         }
     }
 }
-

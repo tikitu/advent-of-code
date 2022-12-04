@@ -13,7 +13,7 @@ struct Script: ParsableCommand {
     struct Part1: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "01")
 
-        func run() {
+        func run() throws {
             print("day 24 part 01")
             // let input = readLines()
         }
@@ -22,7 +22,7 @@ struct Script: ParsableCommand {
     struct Part2: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "02")
 
-        func run() {
+        func run() throws {
             print("day 24 part 02")
             // let input = readLines()
         }

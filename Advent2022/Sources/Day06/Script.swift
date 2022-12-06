@@ -1,6 +1,7 @@
 import ArgumentParser
 import Parsing
 import Utils
+import Algorithms
 
 @main
 struct Script: ParsableCommand {
@@ -15,7 +16,13 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 06 part 01")
-            // let input = readLines()
+            let input = readLine(strippingNewline: true)!
+            let result = input
+                .windows(ofCount: 4)
+                .map { Set($0) }
+                .enumerated()
+                .first { $0.1.count == 4 }
+            print(result!.0 + 4)
         }
     }
 
@@ -24,7 +31,13 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 06 part 02")
-            // let input = readLines()
+            let input = readLine(strippingNewline: true)!
+            let result = input
+                .windows(ofCount: 14)
+                .map { Set($0) }
+                .enumerated()
+                .first { $0.1.count == 14 }
+            print(result!.0 + 14)
         }
     }
 }

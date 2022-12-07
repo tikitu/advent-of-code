@@ -56,7 +56,7 @@ struct Script: ParsableCommand {
     static func parse(input: [String]) throws -> [Line] {
         let cd = Parse {
             "cd "
-            Rest<Substring>()
+            Rest()
         }.map(Command.cd)
         let ls = Parse { "ls" }.map { Command.ls }
         let command = Parse {
@@ -69,12 +69,12 @@ struct Script: ParsableCommand {
 
         let dir = Parse {
             "dir "
-            Rest<Substring>()
+            Rest()
         }.map(File.dir)
         let file = Parse {
             Digits()
             " "
-            Rest<Substring>()
+            Rest()
         }.map(File.file)
         let lsLine = Parse {
             OneOf {

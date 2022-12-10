@@ -7,7 +7,7 @@ struct Script: ParsableCommand {
     static var configuration = CommandConfiguration(
         abstract: "Run Advent of Code 2022 Day 10",
         version: "0.0.1",
-        subcommands: [Part1.self, Part2.self]
+        subcommands: [Part1.self, Part2.self, Part1Tidier.self]
     )
 
     enum Instruction {
@@ -120,6 +120,54 @@ struct Script: ParsableCommand {
                     x += value
                 }
             }
+        }
+    }
+
+    struct Part1Tidier: ParsableCommand {
+        static var configuration = CommandConfiguration(commandName: "1again")
+
+        struct State {
+            var cycle: Int
+            var x: Int
+            var strength: Int { cycle * x }
+        }
+
+
+        func run() throws {
+            print("day 10 part 01")
+            let input = try Script.parse(input: readLines())
+
+            let states = input.reduce([State(cycle: 1, x: 1)]) { (states, instruction) in
+                var states = states
+                states.append(contentsOf: instruction.apply(to: states.last!))
+                return states
+            }
+            let result = states
+                .filter { [20, 60, 100, 140, 180, 220].contains($0.cycle) }
+                .map {
+                    print("\($0) strength: \($0.strength)")
+                    return $0.strength
+                }
+                .reduce(0, +)
+            print(result)
+        }
+    }
+}
+
+extension Script.Instruction {
+    func apply(to state: Script.Part1Tidier.State) -> [Script.Part1Tidier.State] {
+        switch self {
+        case .noop:
+            var next = state
+            next.cycle += 1
+            return [next]
+        case .addX(let value):
+            var first = state
+            first.cycle += 1
+            var second = first
+            second.cycle += 1
+            second.x += value
+            return [first, second]
         }
     }
 }

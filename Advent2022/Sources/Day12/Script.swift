@@ -64,6 +64,47 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 12 part 02")
+            let input = readLines()
+                .map { $0.map { $0.asciiValue! } }
+            var grid = Grid(from: input)
+
+            let start = grid.point(
+                index: grid.values.firstIndex(of: "S".first!.asciiValue!)!)
+            let end = grid.point(
+                index: grid.values.firstIndex(of: "E".first!.asciiValue!)!)
+            grid[end] = "z".first!.asciiValue!
+            grid[start] = "a".first!.asciiValue!
+
+            var search = DijstraIsh(
+                visited: [end],
+                pending: [end],
+                path: Grid(rows: grid.rows, cols: grid.cols,
+                           values: Array(repeating: Int.max, count: grid.values.count)))
+            search.path[end] = 0
+
+            var counter = 1
+            while true {
+                counter += 1
+                if counter.isMultiple(of: 100) {
+                    print(search.pending.count)
+                }
+//                search.path.prettyPrint()
+//                print("")
+
+                let current = search.pending.popFirst()!
+                let path = search.path[current]
+                let neighbours = grid.neighboursBelow(of: current, start: start, end: end)
+                    .subtracting(search.visited)
+                if neighbours.map({ grid[$0] }).contains("a".first!.asciiValue!) {
+                    print("\(path + 1)")
+                    break
+                }
+                for next in neighbours {
+                    search.path[next] = path + 1
+                }
+                search.pending.append(contentsOf: neighbours)
+                search.visited.formUnion(neighbours)
+            }
 
 
         }
@@ -123,6 +164,23 @@ extension Grid where Value == UInt8 {
             point.col < cols - 1 ? Point(row: point.row, col: point.col + 1) : nil
         ].compactMap({ $0 }) {
             if self[next] <= value + 1 {
+                result.insert(next)
+            }
+        }
+        return result
+    }
+
+    func neighboursBelow(of point: Point, start: Point, end: Point) -> Set<Point> {
+        let value = point == start ? "a".first!.asciiValue! : self[point]
+
+        var result: Set<Point> = []
+        for next in [
+            point.row > 0 ? Point(row: point.row - 1, col: point.col) : nil,
+            point.col > 0 ? Point(row: point.row, col: point.col - 1) : nil,
+            point.row < rows - 1 ? Point(row: point.row + 1, col: point.col) : nil,
+            point.col < cols - 1 ? Point(row: point.row, col: point.col + 1) : nil
+        ].compactMap({ $0 }) {
+            if self[next] >= value - 1 {
                 result.insert(next)
             }
         }

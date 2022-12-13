@@ -39,12 +39,26 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 13 part 02")
-            // let input = readLines()
+            var input = readLines()
+                .filter { !$0.isEmpty }
+                .map(parseLine(from:))
+            input.append(.list([.list([.num(2)])]))
+            input.append(.list([.list([.num(6)])]))
+
+            input.sort()
+
+            let first = input.firstIndex(of: .list([.list([.num(2)])]))! + 1
+            let second = input.firstIndex(of: .list([.list([.num(6)])]))! + 1
+            print(first * second)
         }
     }
 }
 
-enum Packet {
+enum Packet: Equatable, Comparable {
+    static func < (lhs: Packet, rhs: Packet) -> Bool {
+        return lhs <= rhs && !(rhs <= lhs)
+    }
+
     case num(Int)
     case list([Packet])
 
@@ -70,6 +84,15 @@ enum Packet {
             return .list([.num(lhs)]) <= rhs
         case (let lhs, .num(let rhs)):
             return lhs <= .list([.num(rhs)])
+        }
+    }
+}
+
+extension Packet: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .num(let v): return "\(v)"
+        case .list(let v): return "[" + v.map { "\($0)" }.joined(separator: ",") + "]"
         }
     }
 }

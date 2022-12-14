@@ -64,7 +64,46 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 14 part 02")
-            // let input = readLines()
+            let input = readLines()
+            let lines = try input.map { try parseLine($0) }
+
+            var cave = Canvas(initial: false)
+            for line in lines {
+                cave.trace(line: line, setting: true)
+            }
+            cave.prettyPrint { $0 ? "#" : "." }
+
+            let floor = cave.maxY + 2
+
+            var count = 0
+            while true {
+                var point = Point(x: 500, y: 0)
+                var moved = true
+                while moved {
+                    if point.y + 1 == floor {
+                        moved = false
+                    } else if !cave[x: point.x, y: point.y + 1] {
+                        point.y += 1
+                        moved = true
+                    } else if !cave[x: point.x - 1, y: point.y + 1] {
+                        point.x -= 1
+                        point.y += 1
+                        moved = true
+                    } else if !cave[x: point.x + 1, y: point.y + 1] {
+                        point.x += 1
+                        point.y += 1
+                        moved = true
+                    } else {
+                        moved = false
+                    }
+                }
+                cave[point] = true
+                count += 1
+                if point == Point(x: 500, y: 0) {
+                    break
+                }
+            }
+            print(count)
         }
     }
 }

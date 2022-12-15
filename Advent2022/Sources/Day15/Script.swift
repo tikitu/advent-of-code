@@ -15,7 +15,28 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 15 part 01")
-            // let input = readLines()
+            let input = try readLines()
+                .map(parseLine(_:))
+            print(input)
+
+            let row = 2000000
+            let candidates = input.filter {
+                $0.manhattanDistance > abs(row - $0.at.y)
+            }
+            print(candidates)
+
+            func overlap(_ sensor: Sensor) -> ClosedRange<Int> {
+                let spill = sensor.manhattanDistance - abs(row - sensor.at.y)
+                return (sensor.at.x - spill)...(sensor.at.x + spill)
+            }
+
+            let result: [Point] = candidates
+                .map(overlap(_:))
+                .reduce(into: Set<Int>()) { $0.formUnion($1) }
+                .map { Point(x: $0, y: row) }
+            let setResult = Set(result)
+                .subtracting(input.map(\.closestBeacon))
+            print(setResult.count)
         }
     }
 
@@ -24,7 +45,49 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 15 part 02")
-            // let input = readLines()
+            let sensors = try readLines()
+                .map(parseLine(_:))
+                .sorted(by: { $0.manhattanDistance >= $1.manhattanDistance })
+
         }
     }
+}
+
+struct Sensor {
+    init(at: Point, closestBeacon: Point) {
+        self.at = at
+        self.closestBeacon = closestBeacon
+        self.manhattanDistance = abs(at.x - closestBeacon.x) + abs(at.y - closestBeacon.y)
+    }
+
+    var at: Point
+    var closestBeacon: Point
+    var manhattanDistance: Int
+}
+
+func parseLine(_ line: String) throws -> Sensor {
+    let parser = Parse(Sensor.init(at:closestBeacon:)) {
+        "Sensor at x="
+        Parse(Point.init(x:y:)) {
+            Int.parser()
+            ", y="
+            Int.parser()
+        }
+        ": closest beacon is at x="
+        Parse(Point.init(x:y:)) {
+            Int.parser()
+            ", y="
+            Int.parser()
+        }
+    }
+    return try parser.parse(line)
+}
+
+struct Point: Hashable {
+  var x: Int
+  var y: Int
+}
+
+extension Point: CustomStringConvertible {
+    var description: String { "\(x),\(y)" }
 }

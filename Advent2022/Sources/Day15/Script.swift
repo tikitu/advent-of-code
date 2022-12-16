@@ -47,8 +47,39 @@ struct Script: ParsableCommand {
             print("day 15 part 02")
             let sensors = try readLines()
                 .map(parseLine(_:))
-                .sorted(by: { $0.manhattanDistance >= $1.manhattanDistance })
+                .sorted(by: { $0.minY <= $1.minY })
 
+            let totalRange = 0..<4_000_000
+            for y in totalRange {
+                if y.isMultiple(of: 100) {
+                    print("\r\(y)", terminator: "")
+                }
+                let ranges: [Range<Int>] = sensors.filter { y >= $0.minY && y <= $0.maxY }
+                    .map { $0.overlap(y: y) }
+                    .filter { $0.overlaps(totalRange) }
+                    .map { $0.clamped(to: totalRange) }
+                var transitions: [(Int, Bool)] = ranges
+                    .reduce(into: []) {
+                        $0.append(($1.lowerBound, true))
+                        if $1.upperBound < totalRange.upperBound {
+                            $0.append(($1.upperBound, false))
+                        }
+                    }
+                transitions.sort(by: { $0.0 < $1.0 || ($0.0 == $1.0 && $0.1) }) // tiebreaker: ins first!
+                var inside = 0
+                for transition in transitions {
+                    if transition.1 {
+                        inside += 1
+                    } else {
+                        inside -= 1
+                    }
+                    if inside == 0 {
+                        print("\nFOUND IT \(transition.0),\(y)")
+                        return
+                    }
+                }
+            }
+            print("done")
         }
     }
 }
@@ -58,11 +89,22 @@ struct Sensor {
         self.at = at
         self.closestBeacon = closestBeacon
         self.manhattanDistance = abs(at.x - closestBeacon.x) + abs(at.y - closestBeacon.y)
+        self.minY = at.y - manhattanDistance
+        self.maxY = at.y + manhattanDistance
     }
 
     var at: Point
     var closestBeacon: Point
     var manhattanDistance: Int
+    var minY: Int
+    var maxY: Int
+
+    func overlap(y: Int) -> Range<Int> {
+        // we ASSUME this (check it elsewhere)
+        // guard y >= minY, y <= maxY else { return nil }
+        let dY = manhattanDistance - abs(y - at.y)
+        return (at.x - dY)..<(at.x + dY + 1)
+    }
 }
 
 func parseLine(_ line: String) throws -> Sensor {

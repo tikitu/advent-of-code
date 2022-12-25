@@ -15,7 +15,33 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 18 part 01")
-            // let input = readLines()
+            let parser = Parse(Cube.init(x:y:z:)) {
+                Digits()
+                ","
+                Digits()
+                ","
+                Digits()
+            }
+            let cubes = try Set(readLines().map { try parser.parse($0) })
+            var faces = 0
+            for cube in cubes {
+                for dx in [-1, 1] {
+                    if !cubes.contains(Cube(x: cube.x + dx, y: cube.y, z: cube.z)) {
+                        faces += 1
+                    }
+                }
+                for dy in [-1, 1] {
+                    if !cubes.contains(Cube(x: cube.x, y: cube.y + dy, z: cube.z)) {
+                        faces += 1
+                    }
+                }
+                for dz in [-1, 1] {
+                    if !cubes.contains(Cube(x: cube.x, y: cube.y, z: cube.z + dz)) {
+                        faces += 1
+                    }
+                }
+            }
+            print(faces)
         }
     }
 
@@ -27,4 +53,10 @@ struct Script: ParsableCommand {
             // let input = readLines()
         }
     }
+}
+
+struct Cube: Hashable {
+    let x: Int
+    let y: Int
+    let z: Int
 }

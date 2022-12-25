@@ -37,7 +37,18 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 23 part 02")
-            // let input = readLines()
+            var state = State(lines: readLines())
+
+            for round in 0... {
+                if round.isMultiple(of: 10) {
+                    print("round \(round + 1)")
+                }
+                let moved = state.perform(round: round)
+                if !moved {
+                    print("stopped! round \(round + 1)")
+                    break
+                }
+            }
         }
     }
 }
@@ -45,7 +56,7 @@ struct Script: ParsableCommand {
 struct State {
     var elves: Set<Point>
 
-    mutating func perform(round: Int) {
+    mutating func perform(round: Int) -> Bool {
         var propositions: [Point: Int] = [:]
         var moves: [Point: Point] = [:]
         func propose(_ elf: Point, to move: Point) {
@@ -82,12 +93,15 @@ struct State {
                 }
             }
         }
+        var moved = false
         for (elf, move) in moves {
             if propositions[move] == 1 {
                 elves.remove(elf)
                 elves.insert(move)
+                moved = true
             }
         }
+        return moved
     }
 
     func emptyNorth(_ elf: Point) -> Bool {

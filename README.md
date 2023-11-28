@@ -2,6 +2,27 @@
 
 Sometimes I solve the puzzles in [Advent of Code](https://adventofcode.com/). When I do they end up here.
 
+## 2023
+
+Language and packaging: [Swift](https://developer.apple.com/swift/), one Swift
+Package Manager [package](Advent2023/Package.swift) with many executable
+targets.
+
+Reading the code: [`Advent2023/Sources/`](Advent2023/Sources) contains the Swift
+sources. Each day has a subdirectory containing a single `Script.swift` file. 
+
+Running the code: from the top-level `Advent2023` directory, `cat input/2 |
+swift run Day04 1` for the first puzzle, `Day04 2` for the second.
+
+Getting the input: you'll have to do that yourself. Input is personalised and
+the author prefers us not to share our input files, to make reverse-engineering
+the site (slightly) harder. To do it the same way I do, there's a shell function
+in `shell_utils` to download the input, inspired by (the much _much_ more
+feature-full) [aoc-cli](https://github.com/scarvalhojr/aoc-cli). To use it you
+need to grab your session cookie (for the personalised puzzle variant) and set
+it in an environment variable imaginatively named
+`ADVENT_OF_CODE_SESSION_COOKIE`.
+
 ## 2022
 
 Language and packaging: [Swift](https://developer.apple.com/swift/), one Swift Package Manager [package](Advent2022/Package.swift) 

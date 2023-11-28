@@ -1,0 +1,3 @@
+function get_input {
+  curl --cookie session=$ADVENT_OF_CODE_SESSION_COOKIE https://adventofcode.com/2023/day/$1/input > input/$1
+}

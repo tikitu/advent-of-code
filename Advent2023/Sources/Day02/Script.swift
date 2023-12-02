@@ -102,6 +102,22 @@ struct Script: ParsableCommand {
             let games = try lines.map {
                 try GameParser().parse($0)
             }
+            print(games.map { $0.min.power }.reduce(0, +))
         }
+    }
+}
+
+extension Game {
+    var min: Throw {
+        Throw(
+            red: records.map { $0.red }.max()!,
+            green: records.map { $0.green }.max()!,
+            blue: records.map { $0.blue }.max()!
+        )
+    }
+}
+extension Throw {
+    var power: Int {
+        red * green * blue
     }
 }

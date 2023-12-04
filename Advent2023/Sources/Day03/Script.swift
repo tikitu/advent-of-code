@@ -4,47 +4,12 @@ import Algorithms
 import Parsing
 import Utils
 
-struct Grid {
-    var rows: [[Character]]
-    init(lines: [String]) {
-        rows = lines.map { $0.map { $0} }
-    }
-
-    var pretty: String {
-        rows.map {
-            String($0)
-        }.joined(separator: "\n")
-    }
-
-    subscript(row row: Int, col col: Int) -> Character? {
-        guard row >= 0, row < rows.count,
-              col >= 0, col < rows[0].count
-        else { return nil }
-        return rows[row][col]
-    }
-
-    func neighbours(row: Int, col: Int) -> [Character] {
-        [-1, 0, 1].map { dX in
-            [-1, 0, 1].map { dY in
-                guard dX != 0 || dY != 0 else { return nil }
-                return self[row: row + dX, col: col + dY]
-            }.compactMap { $0 }
-        }.flatMap { $0 }
-    }
-
-    mutating func filter(replacement: Character = " ", _ predicate: (Character) -> Bool) {
-        rows = rows.map {
-            $0.map {
-                if predicate($0) { $0 } else { replacement }
-            }
-        }
-    }
-
-    func convolve(replacement: Character = " ", _ predicate: (Int, Int) -> Bool) -> Grid {
+extension CharGrid {
+    func convolve(replacement: Character = " ", _ predicate: (Int, Int) -> Bool) -> CharGrid {
         var result = self
         for rowIdx in rows.indices {
             for colIdx in rows[rowIdx].indices {
-                if !predicate(rowIdx, colIdx) { 
+                if !predicate(rowIdx, colIdx) {
                     result.rows[rowIdx][colIdx] = replacement
                 }
             }
@@ -62,22 +27,6 @@ struct Grid {
                 }
             }
         }
-    }
-
-    func diff(_ other: Grid) -> String {
-        guard rows.count == other.rows.count,
-              rows[0].count == other.rows[0].count
-        else { fatalError() }
-        return rows.indices.map { row in
-            rows[row].indices.map { col in
-                let cell = rows[row][col]
-                if cell == "." || rows[row][col] != other.rows[row][col] {
-                    return String(cell)
-                } else {
-                    return "\u{1b}[31;1;4m\(rows[row][col])\u{1b}[0m"
-                }
-            }.joined(separator: "")
-        }.joined(separator: "\n")
     }
 }
 
@@ -104,11 +53,11 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "1")
 
         func run() throws {
-            let grid = Grid(lines: readLines())
+            let grid = CharGrid(lines: readLines())
 
             var numbersWithAdjacentSymbols: [[Character]] = []
 
-            var reduced = Grid(lines: [])
+            var reduced = CharGrid(lines: [])
 
             for rowIdx in grid.rows.indices {
                 var row: [Character] = []
@@ -179,7 +128,7 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "2")
 
         func run() throws {
-            var grid = Grid(lines: readLines())
+            var grid = CharGrid(lines: readLines())
             let original = grid
 
             grid.filter(replacement: ".") { $0.isNumber || $0 == "." || $0 == "*" }
@@ -261,9 +210,9 @@ struct Script: ParsableCommand {
     }
 }
 
-extension Grid {
+extension CharGrid {
     mutating func numbersWithAdjacentSymbols(replacement: Character = " ") {
-        var reduced = Grid(lines: [])
+        var reduced = CharGrid(lines: [])
 
         for rowIdx in self.rows.indices {
             var row: [Character] = []

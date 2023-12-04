@@ -8,6 +8,48 @@ public func readLines() -> [String] {
     return lines
 }
 
+public struct Grid<Cell> {
+    var rows: [[Cell]]
+
+    /// Prettify with separators between cells
+    public func pretty(separator: String = " ") -> String {
+        let cells = rows.map {
+            $0.map {
+                "\($0)"
+            }
+        }
+        let maxWidth = cells.map { $0.map { $0.count }.max()! }.max()!
+        return cells.map {
+            $0.map {
+                var cell = "\($0)"
+                if cell.count < maxWidth {
+                    cell += String(repeating: " ", count: maxWidth - cell.count)
+                }
+                return cell
+            }.joined(separator: separator)
+        }.joined(separator: "\n")
+    }
+
+    /// Edge-safe cell lookup
+    public subscript(row row: Int, col col: Int) -> Cell? {
+        guard row >= 0, row < rows.count,
+              col >= 0, col < rows[0].count
+        else { return nil }
+        return rows[row][col]
+    }
+
+    // Apply a convolution (returning the result, can be assigned to self after)
+    public func convolve(_ f: (Int, Int) -> Cell) -> Grid {
+        var grid = self
+        for row in rows.indices {
+            for col in rows[0].indices {
+                grid.rows[row][col] = f(row, col)
+            }
+        }
+        return grid
+    }
+}
+
 public struct CharGrid {
     public var rows: [[Character]]
     public init(lines: [String]) {
@@ -63,5 +105,16 @@ public struct CharGrid {
                 }
             }.joined(separator: "")
         }.joined(separator: "\n")
+    }
+
+    // Apply a convolution (returning the result, can be assigned to self after)
+    public func convolve(_ f: (Int, Int) -> Character) -> CharGrid {
+        var grid = self
+        for row in rows.indices {
+            for col in rows[0].indices {
+                grid.rows[row][col] = f(row, col)
+            }
+        }
+        return grid
     }
 }

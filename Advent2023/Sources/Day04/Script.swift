@@ -9,6 +9,11 @@ struct Row {
     var before: [Int]
     var after: [Int]
 
+    var matches: Int {
+        let winning = Set(before)
+        return after.filter { winning.contains($0) }.count
+    }
+
     var score: Int {
         let winning = Set(before)
         let wins = after.filter { winning.contains($0) }
@@ -67,7 +72,15 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "2")
 
         func run() throws {
-            print("day 04 part 2")
+            let matches = try readLines().map { try Row.P().parse($0) }.map { $0.matches }
+            var cards = Array(repeating: 1, count: matches.count)
+            for i in matches.indices {
+                let howMany = cards[i]
+                for j in 0..<matches[i] {
+                    cards[i+j+1] += howMany
+                }
+            }
+            print(cards.reduce(0, +))
         }
     }
 }

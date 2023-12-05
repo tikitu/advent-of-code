@@ -19,6 +19,18 @@ struct MapRange {
         }
     }
 
+    func apply(to range: ClosedRange<Int>) -> ClosedRange<Int>? {
+        if range.upperBound < from {
+            return nil
+        }
+        if range.lowerBound >= from+length {
+            return nil
+        }
+        return ClosedRange(uncheckedBounds: (
+            max(range.lowerBound + delta, to),
+            min(to+length-1, range.upperBound+delta)))
+    }
+
     static func parser() -> some Parser<Substring, MapRange> {
         Parse(MapRange.init(to:from:length:)) {
             Int.parser()
@@ -29,6 +41,22 @@ struct MapRange {
         }
     }
 }
+extension ClosedRange<Int> {
+    func split(at points: Set<Int>) -> [ClosedRange<Int>] {
+        var latest = self.lowerBound
+        var result: [ClosedRange<Int>] = []
+        for point in points.sorted() {
+            if self.contains(point) {
+                result.append(ClosedRange(uncheckedBounds: (latest, point)))
+                latest = point + 1
+            }
+        }
+        if self.contains(latest) { // might be upperBound+1 (sigh)
+            result.append(ClosedRange(uncheckedBounds: (latest, self.upperBound)))
+        }
+        return result
+    }
+}
 struct Map {
     var from: String
     var to: String
@@ -36,6 +64,20 @@ struct Map {
 
     func apply(to n: Int) -> Int {
         ranges.firstNonNil { $0.apply(to: n) } ?? n
+    }
+
+    func apply(to range: ClosedRange<Int>) -> [ClosedRange<Int>] {
+        // split range into chunks aligned with my ranges
+        let splitPoints = ranges
+            .sorted(by: { $0.from < $1.from })
+            .flatMap { [$0.from, $0.from + $0.length] }
+        let deduplicatedSplitPoints = Set(splitPoints)
+        let chunks = range.split(at: deduplicatedSplitPoints)
+
+        // apply my ranges to the corresponding chunks
+        return chunks.map { chunk in
+            ranges.firstNonNil { $0.apply(to: chunk) } ?? chunk
+        }
     }
 
     static func parser() -> some Parser<Substring, Map> {
@@ -71,6 +113,19 @@ struct File {
         })
     }
 
+    func apply(to range: ClosedRange<Int>) -> [ClosedRange<Int>] {
+        print("")
+        // print("[\(range)]")
+        return maps.reduce(
+            [range],
+            { (accum, map) in
+                // print(accum, terminator: " ")
+                // print("via \(map.from) to \(map.to): ", terminator: "")
+                return accum.flatMap { map.apply(to: $0) }
+            }
+        )
+    }
+
     static func parser() -> some Parser<Substring, File> {
         Parse(File.init(seeds:maps:)) {
             "seeds: "
@@ -79,7 +134,7 @@ struct File {
             } separator: {
                 " "
             } terminator: {
-                "\n"
+                "\n\n"
             }
             Many {
                 Map.parser()
@@ -116,7 +171,11 @@ struct Script: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "2")
 
         func run() throws {
-            print("day 05 part 2")
+            let input = readLines().joined(separator: "\n")
+            let parsed = try File.parser().parse(input)
+            let all = parsed.seedRanges.flatMap { parsed.apply(to: $0) }
+            print("")
+            print(all.map { $0.lowerBound }.min()!)
         }
     }
 }

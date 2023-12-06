@@ -40,25 +40,29 @@ struct Script: ParsableCommand {
         subcommands: [Part1.self, Part2.self]
     )
 
+    static func compute(_ races: Races) {
+        let result = zip(races.times, races.distances)
+            .map { (time, distance) -> Int in
+                (1..<time).filter { hold in
+                    (time-hold) * hold > distance
+                }
+                .count
+            }
+            .map {
+                print($0, terminator: " ")
+                return $0
+            }
+            .reduce(1, *)
+        print("\n")
+        print(result)
+    }
+
     struct Part1: ParsableCommand {
         static var configuration = CommandConfiguration(commandName: "1")
 
         func run() throws {
             let races = try Races.parser().parse(readLines().joined(separator: "\n"))
-            let result = zip(races.times, races.distances)
-                .map { (time, distance) -> Int in
-                    (1..<time).filter { hold in
-                        (time-hold) * hold > distance
-                    }
-                    .count
-                }
-                .map {
-                    print($0, terminator: " ")
-                    return $0
-                }
-                .reduce(1, *)
-            print("\n")
-            print(result)
+            compute(races)
         }
     }
 
@@ -67,6 +71,15 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 06 part 2")
+            var lines = readLines()
+            lines[0].replace(" ", with: "")
+            lines[0].replace(":", with: ": ")
+            lines[1].replace(" ", with: "")
+            lines[0].replace(":", with: ": ")
+            print(lines[0])
+            print(lines[1])
+            let races = try Races.parser().parse(lines.joined(separator: "\n"))
+            compute(races)
         }
     }
 }

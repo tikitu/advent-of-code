@@ -57,30 +57,6 @@ struct Hand {
 
     }
 
-    struct ByStrength: SortComparator {
-        var order = SortOrder.forward
-
-        func compare(_ lhs: Hand, _ rhs: Hand) -> ComparisonResult {
-            if lhs.type < rhs.type {
-                switch order {
-                case .forward:
-                    return .orderedDescending
-                case .reverse:
-                    return .orderedAscending
-                }
-            }
-            if lhs.type > rhs.type {
-                switch order {
-                case .forward:
-                    return .orderedAscending
-                case .reverse:
-                    return .orderedDescending
-                }
-            }
-            return .orderedSame
-        }
-    }
-
     struct Lexicographic: SortComparator {
         var order = SortOrder.forward
 
@@ -195,7 +171,7 @@ struct Script: ParsableCommand {
             hands.sort(using: Hand.Lexicographic(order: .reverse)) // sorts highest-first
             print(hands.prefix(5).map { String($0.cards) }.joined(separator: "\n"))
             print()
-            hands.sort(using: Hand.ByStrength(order: .reverse)) // highest-first
+            hands.sort(by: { $0.type < $1.type }) // highest-hand-first
             print(hands.prefix(5).map { String($0.cards) }.joined(separator: "\n"))
             print()
             let total = hands.reversed().enumerated().map {
@@ -218,7 +194,7 @@ struct Script: ParsableCommand {
             hands.sort(using: Hand.LexicographicWithJoker(order: .reverse)) // sorts highest-first
             print(hands.prefix(5).map { String($0.cards) }.joined(separator: "\n"))
             print()
-            hands.sort(by: { $0.typeWithJoker < $1.typeWithJoker }) // highest-first
+            hands.sort(by: { $0.typeWithJoker < $1.typeWithJoker }) // highest-hand-first
             print(hands.prefix(5).map { String($0.cards) }.joined(separator: "\n"))
             print()
             let total = hands.reversed().enumerated().map {

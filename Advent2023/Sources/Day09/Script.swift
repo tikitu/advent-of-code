@@ -35,6 +35,16 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 09 part 2")
+            let predictions = readLines().map { line in
+                var  nums = line.split(separator: " ").map { Int($0)! }
+                var leading: [Int] = []
+                while !nums.allSatisfy({ $0 == 0 }) {
+                    leading.insert(nums.first!, at: 0) // order matters now
+                    nums = nums.adjacentPairs().map { $0.1 - $0.0 }
+                }
+                return leading.reduce(0) { $1 - $0 }
+            }
+            print(predictions.reduce(0, +))
         }
     }
 }

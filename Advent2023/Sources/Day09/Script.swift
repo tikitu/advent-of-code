@@ -2,7 +2,7 @@ import Foundation
 import ArgumentParser
 import Algorithms
 import Parsing
-
+import Utils
 
 @main
 struct Script: ParsableCommand {
@@ -17,6 +17,16 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 09 part 1")
+            let predictions = readLines().map { line in
+                var  nums = line.split(separator: " ").map { Int($0)! }
+                var trailing: [Int] = []
+                while !nums.allSatisfy({ $0 == 0 }) {
+                    trailing.append(nums.last!)
+                    nums = nums.adjacentPairs().map { $0.1 - $0.0 }
+                }
+                return trailing.reduce(0, +)
+            }
+            print(predictions.reduce(0, +))
         }
     }
 

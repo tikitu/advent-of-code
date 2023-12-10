@@ -65,10 +65,18 @@ public struct CharGrid {
 
     /// Edge-safe cell lookup
     public subscript(row row: Int, col col: Int) -> Character? {
-        guard row >= 0, row < rows.count,
-              col >= 0, col < rows[0].count
-        else { return nil }
-        return rows[row][col]
+        get {
+            guard row >= 0, row < rows.count,
+                  col >= 0, col < rows[0].count
+            else { return nil }
+            return rows[row][col]
+        }
+        set {
+            guard row >= 0, row < rows.count,
+                  col >= 0, col < rows[0].count
+            else { return }
+            rows[row][col] = newValue!
+        }
     }
 
     /// Edge-safe neighbour set of a cell (not including the cell itself)
@@ -91,17 +99,20 @@ public struct CharGrid {
     }
 
     /// Print this grid highlighting non-default cells that are also in the other grid
-    public func diff(_ other: CharGrid) -> String {
+    public func diff(_ other: CharGrid, showSame: Bool = true) -> String {
         guard rows.count == other.rows.count,
               rows[0].count == other.rows[0].count
         else { fatalError() }
         return rows.indices.map { row in
             rows[row].indices.map { col in
                 let cell = rows[row][col]
-                if cell == "." || rows[row][col] != other.rows[row][col] {
+                if cell == "." {
                     return String(cell)
-                } else {
+                }
+                if showSame == (rows[row][col] == other.rows[row][col]) {
                     return "\u{1b}[31;1;4m\(cell)\u{1b}[0m"
+                } else {
+                    return String(cell)
                 }
             }.joined(separator: "")
         }.joined(separator: "\n")

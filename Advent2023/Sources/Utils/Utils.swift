@@ -8,6 +8,37 @@ public func readLines() -> [String] {
     return lines
 }
 
+// MARK: -- Points
+
+public struct Point: Hashable, Equatable {
+    public var row: Int
+    public var col: Int
+}
+
+extension Point {
+    public func manhattan(_ other: Point) -> Int {
+        abs(other.row - self.row) + abs(other.col - self.col)
+    }
+
+    public func rows(to other: Point) -> ClosedRange<Int> {
+        min(self.row, other.row)...max(self.row, other.row)
+    }
+
+    public func cols(to other: Point) -> ClosedRange<Int> {
+        min(self.col, other.col)...max(self.col, other.col)
+    }
+}
+
+extension Point: Comparable {
+    public static func <(lhs: Point, rhs: Point) -> Bool {
+        if lhs.row < rhs.row { return true }
+        if lhs.col < rhs.col { return true }
+        return false
+    }
+}
+
+// MARK: -- Grids
+
 public struct Grid<Cell> {
     var rows: [[Cell]]
 
@@ -61,6 +92,29 @@ public struct CharGrid {
         rows.map {
             String($0)
         }.joined(separator: "\n")
+    }
+
+    public subscript(_ point: Point) -> Character? {
+        self[row: point.row, col: point.col]
+    }
+
+    public func points() -> Array<Point> {
+        rows.indices.flatMap { row in
+            rows[row].indices.map { col in
+                Point(row: row, col: col)
+            }
+        }
+    }
+
+    public func points(where predicate: (Character) -> Bool) -> Array<Point> {
+        points().filter { predicate(self[$0]!) }
+    }
+
+    public mutating func transpose() {
+        let cols: [[Character]] = rows[0].indices.map { col in
+            rows.map { $0[col] }
+        }
+        rows = cols
     }
 
     /// Edge-safe cell lookup

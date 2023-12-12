@@ -139,6 +139,135 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 12 part 2")
+            let lines = try readLines().map { try Line2.parser().parse($0).fiveTimes }
+            let counts = lines.map { $0.nfa.match(input: $0.input) }
+            print(counts.reduce(0, +))
         }
+    }
+}
+
+struct Line2 {
+    let input: String
+    let nfa: NFA
+
+    static func parser() -> some Parser<Substring, Line2> {
+        Parse(Line2.init(input:nfa:)) {
+            PrefixUpTo(" ").map(String.init)
+            " "
+            Many {
+                Int.parser()
+            } separator: {
+                ","
+            }.map(NFA.init(damaged:))
+        }
+    }
+
+    var fiveTimes: Self {
+        .init(
+            input: Array(repeating: input, count: 5).joined(separator: "?"),
+            nfa: NFA(damaged: Array(Array(repeating: self.nfa.damaged, count: 5).joined())))
+    }
+}
+
+struct NFA {
+    let stateLabels: [String] // the states are *indices* into this array
+    let transitions: [Character: [Set<Int>]]
+    let emptyTransitions: [Set<Int>]
+
+    let damaged: [Int]
+
+    init(damaged: [Int]) {
+        self.damaged = damaged
+
+        var stateLabels = [".*"]
+        var first = true
+        for hashCount in damaged {
+            if first {
+                first = false
+            } else {
+                stateLabels.append(".")
+                stateLabels.append(".*")
+            }
+            stateLabels.append(contentsOf: Array(repeating: "#", count: hashCount))
+        }
+        stateLabels.append(".*")
+        self.stateLabels = stateLabels
+
+        var emptyTransitions: [Set<Int>] = stateLabels.enumerated().map { (idx, label) in
+            if label == ".*" {
+                [idx, idx+1]
+            } else {
+                [idx]
+            }
+        }
+        // don't leave via empty transition!
+        emptyTransitions[emptyTransitions.count - 1] = [emptyTransitions.count - 1]
+
+        var dotTransitions: [Set<Int>] = stateLabels.map { _ in Set<Int>() }
+        for i in dotTransitions.indices {
+            if stateLabels[i] == ".*" {
+                dotTransitions[i].insert(i) // self-transition: consume a dot and stay
+            }
+            if stateLabels[i] == "." {
+                dotTransitions[i].insert(i+1) // leave-transition: consume dot and move on
+            }
+        }
+
+        var hashTransitions: [Set<Int>] = stateLabels.enumerated().map { (idx, label) in
+            if label == "#" {
+                [idx+1]
+            } else {
+                []
+            }
+        }
+
+        var queryTransitions: [Set<Int>] = stateLabels.map { _ in [] }
+        for i in queryTransitions.indices {
+            if stateLabels[i] == ".*" {
+                queryTransitions[i].insert(i)
+            } else if stateLabels[i] == "." || stateLabels[i] == "#" {
+                queryTransitions[i].insert(i+1)
+            }
+        }
+
+        transitions = [
+            ".": dotTransitions,
+            "#": hashTransitions,
+            "?": queryTransitions
+        ]
+        self.emptyTransitions = emptyTransitions
+    }
+
+    func match(input: String) -> Int {
+//        print("λ \(emptyTransitions)")
+//        print(". \(transitions["."]!)")
+//        print("# \(transitions["#"]!)")
+//        print("? \(transitions["?"]!)")
+//        print("\(input) \(stateLabels.joined())")
+
+        var counts = stateLabels.map { _ in 0 }
+        counts[0] = 1 // start state: .*
+
+//        print("  -> \(counts)")
+
+        for next in input {
+            assert(transitions.keys.contains(next), "unexpected char \(next)")
+            apply(transitions: emptyTransitions, to: &counts)
+//            print("λ -> \(counts)")
+            apply(transitions: transitions[next]!, to: &counts)
+//            print("\(next) -> \(counts)")
+        }
+
+        return counts.last!
+    }
+
+    func apply(transitions: [Set<Int>], to counts: inout [Int]) {
+        var newCounts = counts.map { _ in 0 }
+        for oldState in transitions.indices {
+            for newState in transitions[oldState] {
+                newCounts[newState] += counts[oldState]
+            }
+        }
+        counts = newCounts
     }
 }

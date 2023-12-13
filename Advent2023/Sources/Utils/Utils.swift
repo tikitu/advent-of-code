@@ -40,7 +40,10 @@ extension Point: Comparable {
 // MARK: -- Grids
 
 public struct Grid<Cell> {
-    var rows: [[Cell]]
+    public var rows: [[Cell]]
+    public init(rows: [[Cell]]) {
+        self.rows = rows
+    }
 
     /// Prettify with separators between cells
     public func pretty(separator: String = " ") -> String {
@@ -78,6 +81,19 @@ public struct Grid<Cell> {
             }
         }
         return grid
+    }
+
+    public mutating func transpose() {
+        let cols: [[Cell]] = rows[0].indices.map { col in
+            rows.map { $0[col] }
+        }
+        rows = cols
+    }
+
+    public func transposed() -> Self {
+        var result = self
+        result.transpose()
+        return result
     }
 }
 

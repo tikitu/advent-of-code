@@ -121,7 +121,7 @@ public struct Grid<Cell> {
     }
 }
 
-public struct CharGrid: Equatable {
+public struct CharGrid: Equatable, Hashable {
     public var rows: [[Character]]
     public init(lines: [String]) {
         rows = lines.map { $0.map { $0} }

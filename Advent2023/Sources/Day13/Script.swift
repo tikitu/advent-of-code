@@ -57,27 +57,19 @@ struct Script: ParsableCommand {
 
             let reflections = grids.map {
                 print("\n\n\($0.pretty(true: ".", false: "#"))")
-                if let horizontal = $0.rowDifferences().southWestDiagonals().firstIndex(of: 1) {
+                if let horizontal = $0.rowDifferences().southWestDiagonals().firstIndex(
+                    where: { $0.isReflectionDiagonal() }) {
                     print($0.rowDifferences().pretty())
-                    let countBefore = ((horizontal + 1) / 2)
+                    let countBefore = (horizontal / 2) + 1 // ((horizontal + 1) / 2)
                     print("1==> \(countBefore) * 100")
                     return countBefore * 100
-                } else if let horizontal = $0.rowDifferences().southWestDiagonals().firstIndex(of: 2) {
-                    print($0.rowDifferences().pretty())
-                    let countBefore = ((horizontal + 1) / 2)
-                    print("2==> \(countBefore) * 100")
-                    return countBefore * 100
-                } else if let vertical = $0.transposed().rowDifferences().southWestDiagonals().firstIndex(of: 1) {
+                } else if let vertical = $0.transposed().rowDifferences().southWestDiagonals().firstIndex(
+                    where: { $0.isReflectionDiagonal() }) {
                     print($0.transposed().rowDifferences().pretty())
-                    let countBefore = ((vertical + 1) / 2)
-                    print("3==> \(countBefore)")
+                    let countBefore = (vertical / 2) + 1 //((vertical + 1) / 2)
+                    print("2==> \(countBefore)")
                     return countBefore
-                } else if let vertical = $0.transposed().rowDifferences().southWestDiagonals().firstIndex(of: 2) {
-                    print($0.transposed().rowDifferences().pretty())
-                    let countBefore = (vertical / 2) + 1
-                    print("4==> \(countBefore)")
-                    return countBefore
-                } else {
+                 } else {
                     let grid = $0
                     print("=====FAILURE=====")
                     print(grid.pretty(true: ".", false: "#"))
@@ -129,15 +121,22 @@ extension Grid where Cell == Bool {
 }
 
 extension Grid where Cell == Int {
-    func southWestDiagonals() -> [Int] {
+    func southWestDiagonals() -> [[Int]] {
         (0..<rows.count * 2).map { i in
             (0...i).compactMap { j in
                 guard rows.indices.contains(i-j),
                       rows[i-j].indices.contains(j)
                 else { return nil }
                 return rows[i-j][j]
-            }.reduce(0, +)
-        }.dropFirst() // skip the first one, it's always 0 (rows[0] == rows[0])
-            .map { $0 }
+            }
+        }//.dropFirst() // skip the first one, it's always 0 (rows[0] == rows[0])
+         //   .dropLast() // same for the last
+         //   .map { $0 }
+    }
+}
+
+extension [Int] {
+    func isReflectionDiagonal() -> Bool {
+        return count > 1 && allSatisfy { $0 == 1 || $0 == 0 } && [1,2].contains(self.reduce(0, +))
     }
 }

@@ -37,6 +37,30 @@ extension Point: Comparable {
     }
 }
 
+extension Point {
+    public var west: Point {
+        var result = self
+        result.col -= 1
+        return result
+    }
+    public var east: Point {
+        var result = self
+        result.col += 1
+        return result
+    }
+    public var north: Point {
+        var result = self
+        result.row -= 1
+        return result
+    }
+    public var south: Point {
+        var result = self
+        result.row += 1
+        return result
+    }
+}
+
+
 // MARK: -- Grids
 
 public struct Grid<Cell> {
@@ -97,7 +121,7 @@ public struct Grid<Cell> {
     }
 }
 
-public struct CharGrid {
+public struct CharGrid: Equatable {
     public var rows: [[Character]]
     public init(lines: [String]) {
         rows = lines.map { $0.map { $0} }
@@ -194,6 +218,17 @@ public struct CharGrid {
         for row in rows.indices {
             for col in rows[0].indices {
                 grid.rows[row][col] = f(row, col)
+            }
+        }
+        return grid
+    }
+
+    // Apply a convolution (returning the result, can be assigned to self after)
+    public func convolve(_ f: (Point) -> Character) -> CharGrid {
+        var grid = self
+        for row in rows.indices {
+            for col in rows[0].indices {
+                grid.rows[row][col] = f(Point(row: row, col: col))
             }
         }
         return grid

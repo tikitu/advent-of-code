@@ -270,26 +270,3 @@ extension Step {
         .init(row: row, col: col)
     }
 }
-
-extension Point {
-    var west: Point {
-        var result = self
-        result.col -= 1
-        return result
-    }
-    var east: Point {
-        var result = self
-        result.col += 1
-        return result
-    }
-    var north: Point {
-        var result = self
-        result.row -= 1
-        return result
-    }
-    var south: Point {
-        var result = self
-        result.row += 1
-        return result
-    }
-}

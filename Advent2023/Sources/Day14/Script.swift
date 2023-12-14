@@ -2,7 +2,7 @@ import Foundation
 import ArgumentParser
 import Algorithms
 import Parsing
-
+import Utils
 
 @main
 struct Script: ParsableCommand {
@@ -17,6 +17,28 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 14 part 1")
+            var grid = CharGrid(lines: readLines())
+            while true {
+                let newGrid = grid.convolve { (p: Point) in
+                    if grid[p] == "." && grid[p.south] == "O" {
+                        return "O"
+                    }
+                    if grid[p] == "O" && grid[p.north] == "." {
+                        return "."
+                    }
+                    return grid[p]!
+                }
+                if newGrid == grid {
+                    break
+                }
+                grid = newGrid
+            }
+            print(grid.pretty)
+            let weights = grid.rows.reversed().enumerated().map { (idx, row) in
+                (idx + 1) * row.filter { $0 == "O" }.count
+            }
+            print(weights)
+            print(weights.reduce(0, +))
         }
     }
 

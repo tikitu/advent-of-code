@@ -129,6 +129,79 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 16 part 2")
+            var puzzle = Grid(rows: readLines()) { Cell(rawValue: "\($0)")! }
+            func energized(from start: Beam) -> Int {
+                var beams: Set<Beam> = [start]
+                var trace: Set<Beam> = []
+                while true {
+                    var nextBeams: [Beam] = beams.flatMap { beam -> [Beam] in
+                        switch (puzzle[beam.next], beam.dir) {
+                        case (nil, _):
+                            return [] as [Beam]
+                        case (.empty, _):
+                            return [.init(p: beam.next, dir: beam.dir)]
+                        case (.vert, .north), (.vert, .south), (.hori, .west), (.hori, .east):
+                            return [.init(p: beam.next, dir: beam.dir)]
+                        case (.vert, .west), (.vert, .east):
+                            return [
+                                Beam(p: beam.next, dir: .north),
+                                Beam(p: beam.next, dir: .south)
+                            ]
+                        case (.hori, .north), (.hori, .south):
+                            return [
+                                Beam(p: beam.next, dir: .west),
+                                Beam(p: beam.next, dir: .east)
+                            ]
+                        case (.nw, _):
+                            let dir: Direction = switch beam.dir {
+                            case .north:
+                                    .west
+                            case .south:
+                                    .east
+                            case .west:
+                                    .north
+                            case .east:
+                                    .south
+                            }
+                            return [Beam(p: beam.next, dir: dir)]
+                        case (.ne, _):
+                            let dir: Direction = switch beam.dir {
+                            case .north:
+                                    .east
+                            case .south:
+                                    .west
+                            case .west:
+                                    .south
+                            case .east:
+                                    .north
+                            }
+                            return [Beam(p: beam.next, dir: dir)]
+                        }
+                    }
+                        .filter { puzzle[$0.p] != nil }
+                    if trace.isSuperset(of: nextBeams) {
+                        break
+                    } else {
+                        trace.formUnion(nextBeams)
+                    }
+                    beams = Set(nextBeams)
+                }
+                return Set(trace.map { $0.p }).count
+            }
+            let counts = (0..<puzzle.rows[0].count).flatMap { i in
+                print("..\(i)..")
+                return [
+                    energized(from: .init(p: .init(row: -1, col: i), dir: .south)),
+                    energized(from: .init(p: .init(row: puzzle.rows.count, col: i), dir: .north))
+                ]
+            } + (0..<puzzle.rows.count).flatMap { i in
+                print("..\(i)..")
+                return [
+                    energized(from: .init(p: .init(row: i, col: -1), dir: .east)),
+                    energized(from: .init(p: .init(row: i, col: puzzle.rows[0].count), dir: .west))
+                ]
+            }
+            print(counts.max()!)
         }
     }
 }

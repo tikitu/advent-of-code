@@ -13,6 +13,11 @@ public func readLines() -> [String] {
 public struct Point: Hashable, Equatable {
     public var row: Int
     public var col: Int
+
+    public init(row: Int, col: Int) {
+        self.row = row
+        self.col = col
+    }
 }
 
 extension Point {

@@ -37,6 +37,7 @@ extension Point {
 extension Point: Comparable {
     public static func <(lhs: Point, rhs: Point) -> Bool {
         if lhs.row < rhs.row { return true }
+        if lhs.row > rhs.row { return false }
         if lhs.col < rhs.col { return true }
         return false
     }

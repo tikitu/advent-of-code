@@ -247,10 +247,38 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 18 part 2")
-            let lines = readLines().map { try! Line.parser().parse($0) }.map { $0.decodingColor }
-            lines.forEach {
-                print($0)
+            var lines = readLines().map { try! Line.parser().parse($0) }.map { $0.decodingColor }
+
+            var point = Point(row: 0, col: 0)
+            var trace: [Cell] = []
+            for pair in lines.adjacentPairs() {
+                var isClockwise: Bool
+                switch (pair.0.dir, pair.1.dir) {
+                case (.left, .up), (.up, .right), (.right, .down), (.down, .left):
+                    isClockwise = true
+                case (.left, .down), (.up, .left), (.right, .up), (.down, .right):
+                    isClockwise = false
+                case (_, _): // THIS puzzle strictly alternates
+                    continue
+                }
+                switch pair.0.dir {
+                case .right:
+                    point.col += pair.0.count
+                case .left:
+                    point.col -= pair.0.count
+                case .down:
+                    point.row += pair.0.count
+                case .up:
+                    point.row -= pair.0.count
+                }
+                trace.append(Cell(p: point, type: .corner(isClockwise)))
             }
+
+            // I read a spoiler. Hadn't occurred to me to search for numerical solutions.
+
+            // find points on the *outside perimeter* of the trench (sigh, that's a pain)
+            // form their pairs (wrapping around at the end)
+            // area of the polygon is abs(1/2 \sigma (x_ny_n+1 - x_n+1y_n))
         }
     }
 }

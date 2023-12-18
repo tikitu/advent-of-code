@@ -91,6 +91,24 @@ struct Line {
             ")"
         }
     }
+
+    var decodingColor: Self {
+        var new = self
+        switch color.last {
+        case "0":
+            new.dir = .right
+        case "1":
+            new.dir = .down
+        case "2":
+            new.dir = .left
+        case "3":
+            new.dir = .up
+        default:
+            assertionFailure("expected [0123] got \(String(describing: color.last))")
+        }
+        new.count = Int(color.dropLast(), radix: 16)!
+        return new
+    }
 }
 
 struct GrowableGrid {
@@ -229,6 +247,10 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 18 part 2")
+            let lines = readLines().map { try! Line.parser().parse($0) }.map { $0.decodingColor }
+            lines.forEach {
+                print($0)
+            }
         }
     }
 }

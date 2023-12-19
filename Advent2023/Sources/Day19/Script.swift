@@ -178,6 +178,109 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 19 part 2")
+            let dfa = try Puzzle.parser().parse(readLines().joined(separator: "\n")).dfa
+
+            var states: Set<SearchState> = []
+            var pending: [SearchState] = [.init(state: "in", parts: .init())]
+            while true {
+                states.formUnion(pending)
+                let next = pending.flatMap { state in
+                    dfa.transitions(from: state)
+                        .filter { !$0.parts.isEmpty }
+                        .filter { !states.contains($0) }
+                }
+                guard !pending.isEmpty else { break }
+                print("total: \(states.count), next: \(next.count)")
+                pending = next
+            }
+            let accepted = states.filter { $0.state == "A" }
+            print(accepted.map { $0.parts.count }.reduce(0, +))
         }
     }
+}
+
+extension DFA {
+    func transitions(from searchState: SearchState) -> [SearchState] {
+        guard let state = states[searchState.state] else { return [] }
+        return state.transitions(from: searchState.parts)
+    }
+}
+
+extension DFA.State {
+    func transitions(from parts: PartRange) -> [SearchState] {
+        var result: [SearchState] = []
+        var parts = parts
+        for rule in rules {
+            result.append(rule.accepting(parts))
+            parts = rule.rejecting(parts)
+        }
+        result.append(SearchState(state: fallback, parts: parts))
+        return result
+    }
+}
+
+extension DFA.Rule {
+    func accepting(_ parts: PartRange) -> SearchState {
+        var parts = parts
+        let variable: WritableKeyPath<PartRange, Range<Int>> = switch self.variable {
+        case .x:
+            \.x
+        case .m:
+            \.m
+        case .a:
+            \.a
+        case .s:
+            \.s
+        }
+        switch comparison {
+        case .lt:
+            parts[keyPath: variable] = parts[keyPath: variable].clamped(to: 1..<value)
+        case .gt:
+            parts[keyPath: variable] = parts[keyPath: variable].clamped(to: value+1..<4001)
+        }
+        return SearchState(state: newState, parts: parts)
+    }
+    func rejecting(_ parts: PartRange) -> PartRange {
+        var parts = parts
+        let variable: WritableKeyPath<PartRange, Range<Int>> = switch self.variable {
+        case .x:
+            \.x
+        case .m:
+            \.m
+        case .a:
+            \.a
+        case .s:
+            \.s
+        }
+        switch comparison {
+        case .lt:
+            parts[keyPath: variable] = parts[keyPath: variable].clamped(to: value..<4001)
+        case .gt:
+            parts[keyPath: variable] = parts[keyPath: variable].clamped(to: 1..<value+1)
+        }
+        return parts
+    }
+}
+
+struct PartRange: Hashable {
+    var x: Range<Int>
+    var m: Range<Int>
+    var a: Range<Int>
+    var s: Range<Int>
+
+    var count: Int {
+        x.count * m.count * a.count * s.count
+    }
+    var isEmpty: Bool { // could also be self.count == 0
+        [x.isEmpty, m.isEmpty, a.isEmpty, s.isEmpty].first { $0 } ?? false
+    }
+}
+extension PartRange {
+    init() {
+        self.init(x: 1..<4001, m: 1..<4001, a: 1..<4001, s: 1..<4001)
+    }
+}
+struct SearchState: Hashable {
+    var state: Substring
+    var parts: PartRange
 }

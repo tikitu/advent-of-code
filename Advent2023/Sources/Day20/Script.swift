@@ -128,6 +128,18 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 20 part 2")
+            var network = try Network(nodes: readLines().map { try Node.parser().parse($0) })
+            for i in 1...10_000_000 {
+                let pulses = network.pushButton()
+                if pulses.contains(where: { $0.to == "rx" && !$0.isHigh }) {
+                    print("got it! \(i)")
+                    break
+                }
+                if i % 1000 == 0 {
+                    print(i)
+                }
+            }
+
         }
     }
 }

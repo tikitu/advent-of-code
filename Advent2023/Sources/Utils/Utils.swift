@@ -64,6 +64,9 @@ extension Point {
         result.row += 1
         return result
     }
+    public var cardinals: [Point] {
+        [north, south, west, east]
+    }
 }
 
 
@@ -106,12 +109,28 @@ public struct Grid<Cell> {
         self[row: p.row, col: p.col]
     }
 
+    public subscript(wrapping p: Point) -> Cell {
+        self[row: (p.row + rows.count) % rows.count,
+             col: (p.col + rows[0].count) % rows[0].count]!
+    }
+
     // Apply a convolution (returning the result, can be assigned to self after)
     public func convolve(_ f: (Int, Int) -> Cell) -> Grid {
         var grid = self
         for row in rows.indices {
             for col in rows[0].indices {
                 grid.rows[row][col] = f(row, col)
+            }
+        }
+        return grid
+    }
+
+    // Apply a convolution (returning the result, can be assigned to self after)
+    public func convolve(_ f: (Point) -> Cell) -> Grid {
+        var grid = self
+        for row in rows.indices {
+            for col in rows[0].indices {
+                grid.rows[row][col] = f(Point(row: row, col: col))
             }
         }
         return grid
@@ -146,6 +165,11 @@ public struct CharGrid: Equatable, Hashable {
 
     public subscript(_ point: Point) -> Character? {
         self[row: point.row, col: point.col]
+    }
+
+    public subscript(wrapping p: Point) -> Character {
+        self[row: (p.row + rows.count) % rows.count,
+             col: (p.col + rows[0].count) % rows[0].count]!
     }
 
     public func points() -> Array<Point> {

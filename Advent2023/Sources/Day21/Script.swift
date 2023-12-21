@@ -36,6 +36,25 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 21 part 2")
+            let lines = readLines()
+            let garden = CharGrid(lines: lines.map { $0.replacingOccurrences(of: "S", with: ".") })
+            var counts = Grid(rows: lines.map { $0.map { if $0 == "S" { 1 } else { 0 } }})
+            for i in 1...5000 { // 26_501_365 {
+                counts = counts.convolve { p in
+                    if garden[p] == "#" {
+                        0
+                    } else {
+                        p.cardinals
+                            .map { counts[wrapping: $0] }
+                            .reduce(0, +)
+                    }
+                }
+                if [1, 2, 3, 4, 5, 6, 10, 50, 100, 500, 1000, 5000].contains(i) {
+                    print("\(i): \(counts.rows.map { $0.reduce(0, +) }.reduce(0, +))")
+                    print(counts.pretty(separator: ""))
+                    print("")
+                }
+            }
         }
     }
 }

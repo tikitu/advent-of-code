@@ -102,6 +102,10 @@ public struct Grid<Cell> {
         return rows[row][col]
     }
 
+    public subscript(_ p: Point) -> Cell? {
+        self[row: p.row, col: p.col]
+    }
+
     // Apply a convolution (returning the result, can be assigned to self after)
     public func convolve(_ f: (Int, Int) -> Cell) -> Grid {
         var grid = self

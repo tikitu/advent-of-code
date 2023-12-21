@@ -156,6 +156,11 @@ public struct CharGrid: Equatable, Hashable {
         }
     }
 
+    /// Neighbour points _within this grid_
+    public func neighbours(of point: Point) -> [Point] {
+        [point.north, point.south, point.west, point.east].filter { self[$0] != nil }
+    }
+
     public func points(where predicate: (Character) -> Bool) -> Array<Point> {
         points().filter { predicate(self[$0]!) }
     }

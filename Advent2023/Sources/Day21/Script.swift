@@ -2,7 +2,7 @@ import Foundation
 import ArgumentParser
 import Algorithms
 import Parsing
-
+import Utils
 
 @main
 struct Script: ParsableCommand {
@@ -17,6 +17,17 @@ struct Script: ParsableCommand {
 
         func run() throws {
             print("day 21 part 1")
+            let puzzle = CharGrid(lines: readLines())
+            var cells = Set(puzzle.points(where: { $0 != "." && $0 != "#" }))
+            assert(cells.count == 1)
+            for i in 1...64 {
+                cells = Set(
+                    cells.flatMap { puzzle.neighbours(of: $0) }
+                        .filter { puzzle[$0] != "#" }
+                )
+                print("\(i): \(cells.count)")
+            }
+            print(cells.count)
         }
     }
 

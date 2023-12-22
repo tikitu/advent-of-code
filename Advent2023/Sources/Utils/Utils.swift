@@ -79,11 +79,9 @@ public struct Grid<Cell> {
     }
 
     /// Prettify with separators between cells
-    public func pretty(separator: String = " ") -> String {
+    public func pretty(separator: String = " ", display: (Cell) -> String = { "\($0)" }) -> String {
         let cells = rows.map {
-            $0.map {
-                "\($0)"
-            }
+            $0.map(display)
         }
         let maxWidth = cells.map { $0.map { $0.count }.max()! }.max()!
         return cells.map {

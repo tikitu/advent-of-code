@@ -97,21 +97,40 @@ public struct Grid<Cell> {
 
     /// Edge-safe cell lookup
     public subscript(row row: Int, col col: Int) -> Cell? {
-        guard row >= 0, row < rows.count,
-              col >= 0, col < rows[0].count
-        else { return nil }
-        return rows[row][col]
+        get {
+            guard row >= 0, row < rows.count,
+                  col >= 0, col < rows[0].count
+            else { return nil }
+            return rows[row][col]
+        }
+        mutating set {
+            guard row >= 0, row < rows.count,
+                  col >= 0, col < rows[0].count,
+                  let newValue
+            else { return }
+            rows[row][col] = newValue
+        }
     }
 
     public subscript(_ p: Point) -> Cell? {
-        self[row: p.row, col: p.col]
+        get {
+            self[row: p.row, col: p.col]
+        }
+        mutating set {
+            self[row: p.row, col: p.col] = newValue
+        }
     }
 
     public subscript(wrapping p: Point) -> Cell {
-        self[row: (p.row + rows.count) % rows.count,
-             col: (p.col + rows[0].count) % rows[0].count]!
+        get {
+            self[row: mod(p.row, rows.count),
+                 col: mod(p.col, rows[0].count)]!
+        }
+        mutating set {
+            self[row: mod(p.row, rows.count),
+                 col: mod(p.col, rows[0].count)] = newValue
+        }
     }
-
     // Apply a convolution (returning the result, can be assigned to self after)
     public func convolve(_ f: (Int, Int) -> Cell) -> Grid {
         var grid = self
@@ -162,12 +181,23 @@ public struct CharGrid: Equatable, Hashable {
     }
 
     public subscript(_ point: Point) -> Character? {
-        self[row: point.row, col: point.col]
+        get {
+            self[row: point.row, col: point.col]
+        }
+        mutating set {
+            self[row: point.row, col: point.col] = newValue
+        }
     }
 
     public subscript(wrapping p: Point) -> Character {
-        self[row: (p.row + rows.count) % rows.count,
-             col: (p.col + rows[0].count) % rows[0].count]!
+        get {
+            self[row: mod(p.row, rows.count),
+                 col: mod(p.col, rows[0].count)]!
+        }
+        mutating set {
+            self[row: mod(p.row, rows.count),
+                 col: mod(p.col, rows[0].count)] = newValue
+        }
     }
 
     public func points() -> Array<Point> {
@@ -270,4 +300,10 @@ public struct CharGrid: Equatable, Hashable {
         }
         return grid
     }
+}
+
+func mod(_ a: Int, _ n: Int) -> Int {
+    precondition(n > 0, "modulus must be positive")
+    let r = a % n
+    return r >= 0 ? r : r + n
 }

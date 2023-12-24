@@ -217,6 +217,10 @@ public struct CharGrid: Equatable, Hashable {
         points().filter { predicate(self[$0]!) }
     }
 
+    public func points(where predicate: (Point) ->  Bool) -> Array<Point> {
+        points().filter { predicate($0) }
+    }
+
     public mutating func transpose() {
         let cols: [[Character]] = rows[0].indices.map { col in
             rows.map { $0[col] }
